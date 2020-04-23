@@ -1,0 +1,75 @@
+---
+title: "NDVI_resampling"
+author: "Xavier Rotllan-Puig"
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+output: 
+  word_document:
+    #reference_docx: LPD_MS_styles.docx
+    #toc: true #table of content true
+    toc_depth: 3  #up to three depths of headings (specified by #, ## and ###)
+    #number_sections: true  #number sections at each table header
+    #theme: united  #options for theme
+    #highlight: tango  #syntax highlighting style
+    #css: style.css   #custom css, should be in same folder. Only for HTML
+    #pandoc_args:
+    #  - --lua-filter=scholar-metadata.lua
+    #  - --lua-filter=author-info-blocks.lua
+      
+#bibliography: lpd_biblio.bib
+#csl: methods-in-ecology-and-evolution.csl
+always_allow_html: yes
+
+
+---
+
+
+```{r setup, include = FALSE, results='asis'}
+library(knitr)
+library(pander)
+library(captioner)
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r include = FALSE}
+if(Sys.info()[4] == "D01RI1700371"){
+  path2data <- "E:/rotllxa/NDVI_resample/NDVI_data"
+  path2save <- "E:/rotllxa/NDVI_resample/NDVI_resample"
+}else if(Sys.info()[4] == "h05-wad.ies.jrc.it"){
+  path2data <- ""
+  path2save <- ""
+}else if(Sys.info()[4] == "MacBook-MacBook-Pro-de-Xavier.local"){
+  path2data <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_data"
+  path2save <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample"
+}else{
+  stop("Define your machine before to run LPD")
+}
+
+
+table_num <- captioner::captioner(prefix = "Table")
+fig_num <- captioner::captioner(prefix = "Figure")
+#ts <- 0
+```
+
+
+```{r include = FALSE}
+fig0_1km <- fig_num(name = "f0_1km_300", caption = "Working NDVI maps at 1km and 333m resolution, respectively")
+orig_mapsCat <- paste0(path2save, "/ndvi1km_300m_Cat.jpg")
+
+
+```
+
+
+This is a document to show different options for the resampling of Land products (https://land.copernicus.eu/) from 333m to 1km using R functions and packages. Some comparison of the performance of several methods are also provided.
+
+The analisys is done using a subset of the 10-daily Normalized Difference Vegetation Index global product downloaded from the Copernicus Global Land Product portal (https://land.copernicus.eu/global/products/ndvi). The selected images are from 11^th^August 2019 and the working maps are cut between the coordinates (DD) Xmin = 0, Xmax = 4, Ymin = 40, Ymax = 43. See `r fig_num("f0_1km_300", display = "cite")` for the two working maps at 1km and 333m resolution, respectively. 
+
+
+![`r fig0_1km`](`r orig_mapsCat`)
+
+
+
+
+
+
+
