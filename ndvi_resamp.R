@@ -4,6 +4,7 @@ library(fields)
 library(raster)
 library(rgdal)
 library(lattice)
+library(sf)
 
 if(Sys.info()[4] == "D01RI1700371"){
   path2data <- "E:/rotllxa/NDVI_resample/NDVI_data"
@@ -85,6 +86,7 @@ ndvi1km_rstr
 writeRaster(ndvi1km_rstr, paste0(path2save, "/ndvi1km_Cat.tif"), overwrite = TRUE)
 ndvi1km_rstr <- raster(paste0(path2save, "/ndvi1km_Cat.tif"))
 
+
 ## Crop (Catalonia)
 
 #cat_extnt <- extent(c(0.3, 3.4, 40.4, 43))
@@ -107,6 +109,12 @@ flag_values <-  255    # missing_value
 
 # cuttoff for NAs and flagged values on the NDVI image
 cuttoff_NA_err <- (max(as.vector(ndvi1km)) / flag_values) * valid_range  # everything >= cuttoff_NA_err, must be removed for the calculations
+
+
+jpeg(paste0(path2save, "/ndvi1km_kk.jpg"))
+plot(ndvi1km_rstr, breaks = c(minValue(ndvi1km_rstr), cuttoff_NA_err, maxValue(ndvi1km_rstr)), col = c("blue", "red"))
+dev.off()
+
 
 
 
@@ -178,12 +186,23 @@ ndvi300m_rstr <- raster(paste0(path2save, "/ndvi300m_Cat.tif"))
 #cat_extnt <- extent(c(0.3, 3.4, 40.4, 43))
 #crop(ndvi300m_rstr, cat_extnt, filename = paste0(path2save, "/ndvi300m_Cat.tif"))
 
+
+# Plotting NAs and flagged values map
+cuttoff_NA_err_300 <- (max(as.vector(ndvi300m)) / flag_values) * valid_range  # everything >= cuttoff_NA_err, must be removed for the calculations
+
+if(cuttoff_NA_err != cuttoff_NA_err_300) stop("check why the cutoff is different for each resolution!!!")
+
+jpeg(paste0(path2save, "/ndvi300m_kk.jpg"))
+plot(ndvi300m_rstr, breaks = c(minValue(ndvi300m_rstr), cuttoff_NA_err, maxValue(ndvi300m_rstr)), col = c("blue", "red"))
+dev.off()
+
+
 nc_close(nc)
 
 
 
 
-## Resampling ####
+## Resampling using the Bilinear approach ####
 
 summary(ndvi1km_rstr)
 summary(ndvi300m_rstr)
@@ -191,9 +210,10 @@ summary(ndvi300m_rstr)
 ndvi300m_rsampled1km <- resample(ndvi300m_rstr, ndvi1km_rstr, 
                                  method = "bilinear", 
                                  filename = paste0(path2save, "/ndvi300m_rsampled1km.tif"))
-
+#ndvi300m_rsampled1km <- raster(paste0(path2save, "/ndvi300m_rsampled1km.tif"))
 ndvi300m_rsampled1km
 summary(ndvi300m_rsampled1km)
+nrow(as.data.frame(ndvi300m_rsampled1km))
 
 jpeg(paste0(path2save, "/ndvi300m_rsampled1km.jpg"))
 plot(ndvi300m_rsampled1km)
@@ -203,6 +223,7 @@ dev.off()
 
 rsmpl_df <- data.frame(as.vector(ndvi1km_rstr), as.vector(ndvi300m_rsampled1km))
 str(rsmpl_df)
+nrow(rsmpl_df)
 summary(rsmpl_df$as.vector.ndvi300m_rsampled1km.)
 
 length(as.vector(ndvi1km_rstr))
@@ -211,20 +232,39 @@ length(as.vector(ndvi300m_rsampled1km))
 sum(is.na(as.vector(ndvi300m_rsampled1km)))
 
 head(rsmpl_df)
+sum(!complete.cases(rsmpl_df))
+sum(!complete.cases(rsmpl_df[, 2]))
 
-rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), ]
+#rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), ]
 nrow(rsmpl_df)
+head(rsmpl_df)
+
+cuttoff_NA_err #this is the last good
+sum(rsmpl_df$as.vector.ndvi1km_rstr. > cuttoff_NA_err)
+sum(rsmpl_df$as.vector.ndvi300m_rsampled1km. > cuttoff_NA_err, na.rm = TRUE)
+rsmpl_df$Err1km <- ifelse(as.vector(ndvi1km_rstr) > (cuttoff_NA_err + 0.0001), "red", "blue")
+rsmpl_df$Err1kmResampled <- ifelse(rsmpl_df$as.vector.ndvi300m_rsampled1km. > (cuttoff_NA_err + 0.0001), "green", "blue")
+rsmpl_df$badResamplingLow <- ifelse(rsmpl_df$as.vector.ndvi1km_rstr. > (cuttoff_NA_err + 0.0001) &
+                                      rsmpl_df$as.vector.ndvi300m_rsampled1km. <= cuttoff_NA_err,
+                                    "red", "green")
+badResamplingLowProp <- round(((table(rsmpl_df$badResamplingLow)[2] / nrow(rsmpl_df)) * 100), 2)
+rsmpl_df$badResamplingHigh <- ifelse(rsmpl_df$as.vector.ndvi300m_rsampled1km. > (cuttoff_NA_err + 0.0001) &
+                                      rsmpl_df$as.vector.ndvi1km_rstr. <= cuttoff_NA_err,
+                                    "red", "green")
+badResamplingHighProp <- round(((table(rsmpl_df$badResamplingHigh)[2] / nrow(rsmpl_df)) * 100), 2)
 
 
-#rsmpl_df <- rsmpl_df[rsmpl_df$as.vector.ndvi1km_rstr. < 0.935, ]
+head(rsmpl_df)
+range(rsmpl_df[rsmpl_df$Err1km == "red", 1])
 #rsmpl_df <- rsmpl_df[rsmpl_df$as.vector.ndvi300m_rsampled1km. < 0.935, ]
 
-rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")
-rsmpl_df_pearson[2, 1]
+
+rsmpl_df_pearson <- cor(rsmpl_df[complete.cases(rsmpl_df), 1:2], method = "pearson")[2, 1]
 
 
-jpeg(paste0(path2save, "/resample_correlation.jpg"))
+jpeg(paste0(path2save, "/resample_correlation_kk.jpg"))
 xyplot(rsmpl_df$as.vector.ndvi300m_rsampled1km. ~ rsmpl_df$as.vector.ndvi1km_rstr., type = c("p"),
+       col = rsmpl_df$Err1km,
        main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson[2, 1], 4))))
 dev.off()
 
@@ -238,13 +278,154 @@ plot(ndvi300m_rstr, main = "NDVI 333")
 dev.off()
 
 
+jpeg(paste0(path2save, "/ndvi1km_Err.jpg"))
+rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df$Err1km))
+plot(rstr2plot, main = paste0("NDVI values > ", cuttoff_NA_err, " (NA, errors, etc)"), 
+     legend = FALSE, col = c("blue", "white"))
+dev.off()
+
+
+
+
+# Mapping underpredictions 
+#map_countr <- st_read("/Users/xavi_rp/Documents/Reference_Maps/ref-nuts-2016-60m.shp/NUTS_BN_60M_2016_4326_LEVL_0.shp/NUTS_BN_60M_2016_4326_LEVL_0.shp")
+jpeg(paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow.jpg"))
+rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df$badResamplingLow))
+plot(rstr2plot, main = paste0("NDVI observed 1km > ", round(cuttoff_NA_err, 4), "\n and predicted <= ", round(cuttoff_NA_err, 4)), 
+     legend = FALSE, col = c("green", "red"), cex.main = 1.3)
+#plot(map_countr, add =TRUE)
+text(x = 2, y = 39.5, 
+     label = paste0("Proportion of underpredicted pixels: ", badResamplingLowProp, "%"), 
+     cex = 1.2, col = "red", xpd = TRUE)
+dev.off()
+
+
+# Mapping overpredictions
+jpeg(paste0(path2save, "/ndvi300m_rsampled1km_badResamplingHigh.jpg"))
+rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df$badResamplingHigh))
+plot(rstr2plot, main = paste0("NDVI observed 1km <= ", round(cuttoff_NA_err, 4), "\n and predicted > ", round(cuttoff_NA_err, 4)), 
+     legend = FALSE, col = c("green", "red"), cex.main = 1.3)
+text(x = 2, y = 39.5, 
+     label = paste0("Proportion of overpredicted pixels: ", badResamplingHighProp, "%"), 
+     cex = 1.2, col = "red", xpd = TRUE)
+dev.off()
+
+
 
 jpeg(paste0(path2save, "/ndvi300m_rsampled1km_compar.jpg"))
 plot(ndvi300m_rsampled1km, main = "ndvi300m_rsampled1km")
 dev.off()
 
 
+stuff2save <- c("cuttoff_NA_err", "rsmpl_df_pearson", "badResamplingHighProp", "badResamplingLowProp")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults4Report.RData"))
 
+
+
+
+
+## Resampling using the aggregation approach ####
+
+summary(ndvi1km_rstr)
+summary(ndvi300m_rstr)
+
+ndvi300m_rsampled1km_Aggr <- aggregate(ndvi300m_rstr,
+                                      fact = 3, # from 333m to 1km  
+                                      fun = mean, 
+                                      expand = TRUE, 
+                                      na.rm = TRUE, 
+                                      filename = paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"))
+
+#ndvi300m_rsampled1km_Aggr <- raster(paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"))
+ndvi300m_rsampled1km_Aggr
+summary(ndvi300m_rsampled1km_Aggr)
+nrow(as.data.frame(ndvi300m_rsampled1km_Aggr))   # 787 pixels have been lost!!!
+
+# Expanding the resulting map
+ndvi300m_rsampled1km_Aggr <- extend(ndvi300m_rsampled1km_Aggr, ndvi1km_rstr, value = NA, 
+                                    filename = paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"),
+                                    overwrite = TRUE)
+
+
+jpeg(paste0(path2save, "/ndvi300m_rsampled1km_Aggr.jpg"))
+plot(ndvi300m_rsampled1km_Aggr)
+dev.off()
+
+
+
+rsmpl_df_Aggr <- data.frame(as.vector(ndvi1km_rstr), as.vector(ndvi300m_rsampled1km_Aggr))
+str(rsmpl_df_Aggr)
+nrow(rsmpl_df_Aggr)
+summary(rsmpl_df_Aggr$as.vector.ndvi300m_rsampled1km_Aggr.)
+
+head(rsmpl_df_Aggr)
+sum(!complete.cases(rsmpl_df_Aggr))
+sum(!complete.cases(rsmpl_df_Aggr[, 2]))
+
+#rsmpl_df_Aggr <- rsmpl_df_Aggr[complete.cases(rsmpl_df_Aggr), ]
+nrow(rsmpl_df_Aggr)
+head(rsmpl_df_Aggr)
+
+
+cuttoff_NA_err #this is the last good
+sum(rsmpl_df_Aggr$as.vector.ndvi1km_rstr. > cuttoff_NA_err)
+sum(rsmpl_df_Aggr$as.vector.ndvi300m_rsampled1km_Aggr. > cuttoff_NA_err, na.rm = TRUE)
+rsmpl_df_Aggr$Err1km <- ifelse(as.vector(ndvi1km_rstr) > (cuttoff_NA_err + 0.0001), "red", "blue")
+rsmpl_df_Aggr$Err1kmResampled <- ifelse(rsmpl_df_Aggr$as.vector.ndvi300m_rsampled1km_Aggr. > (cuttoff_NA_err + 0.0001), "green", "blue")
+
+rsmpl_df_Aggr$badResamplingLow <- ifelse(rsmpl_df_Aggr$as.vector.ndvi1km_rstr. > (cuttoff_NA_err + 0.0001) &
+                                      rsmpl_df_Aggr$as.vector.ndvi300m_rsampled1km_Aggr. <= cuttoff_NA_err,
+                                    "red", "green")
+badResamplingLowProp_Aggr <- round(((table(rsmpl_df_Aggr$badResamplingLow)[2] / nrow(rsmpl_df_Aggr)) * 100), 2)
+
+rsmpl_df_Aggr$badResamplingHigh <- ifelse(rsmpl_df_Aggr$as.vector.ndvi300m_rsampled1km_Aggr. > (cuttoff_NA_err + 0.0001) &
+                                       rsmpl_df_Aggr$as.vector.ndvi1km_rstr. <= cuttoff_NA_err,
+                                     "red", "green")
+badResamplingHighProp_Aggr <- round(((table(rsmpl_df_Aggr$badResamplingHigh)[2] / nrow(rsmpl_df_Aggr)) * 100), 2)
+
+
+head(rsmpl_df_Aggr)
+range(rsmpl_df_Aggr[rsmpl_df_Aggr$Err1km == "red", 1])
+#rsmpl_df_Aggr <- rsmpl_df_Aggr[rsmpl_df_Aggr$as.vector.ndvi300m_rsampled1km. < 0.935, ]
+
+
+rsmpl_df_Aggr_pearson <- cor(rsmpl_df_Aggr[complete.cases(rsmpl_df_Aggr), 1:2], method = "pearson")[2, 1]
+
+
+jpeg(paste0(path2save, "/resample_correlation_Aggr.jpg"))
+xyplot(rsmpl_df_Aggr$as.vector.ndvi300m_rsampled1km_Aggr. ~ rsmpl_df_Aggr$as.vector.ndvi1km_rstr., type = c("p"),
+       #col = rsmpl_df_Aggr$Err1km,
+       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_Aggr_pearson, 4))))
+dev.off()
+
+
+# Mapping underpredictions 
+jpeg(paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow_Agrr.jpg"))
+rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df_Aggr$badResamplingLow))
+plot(rstr2plot, main = paste0("NDVI observed 1km > ", round(cuttoff_NA_err, 4), "\n and predicted <= ", round(cuttoff_NA_err, 4)), 
+     legend = FALSE, col = c("green", "red"), cex.main = 1.3)
+text(x = 2, y = 39.5, 
+     label = paste0("Proportion of underpredicted pixels: ", badResamplingLowProp_Aggr, "%"), 
+     cex = 1.2, col = "red", xpd = TRUE)
+dev.off()
+
+
+# Mapping overpredictions
+jpeg(paste0(path2save, "/ndvi300m_rsampled1km_badResamplingHigh_Aggr.jpg"))
+rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df_Aggr$badResamplingHigh))
+plot(rstr2plot, main = paste0("NDVI observed 1km <= ", round(cuttoff_NA_err, 4), "\n and predicted > ", round(cuttoff_NA_err, 4)), 
+     legend = FALSE, col = c("green", "red"), cex.main = 1.3)
+text(x = 2, y = 39.5, 
+     label = paste0("Proportion of overpredicted pixels: ", badResamplingHighProp_Agrr, "%"), 
+     cex = 1.2, col = "red", xpd = TRUE)
+dev.off()
+
+
+
+# Saving results 4 report
+
+stuff2save <- c(stuff2save,  "rsmpl_df_Aggr_pearson", "badResamplingHighProp_Aggr", "badResamplingLowProp_Aggr")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults4Report.RData"))
 
 
 

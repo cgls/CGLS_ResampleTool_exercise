@@ -1,10 +1,10 @@
 ---
-title: "NDVI_resampling"
+title: "NDVI Resampling using R-based tools"
 author: "Xavier Rotllan-Puig"
 date: "`r format(Sys.time(), '%d/%m/%Y')`"
 output: 
   word_document:
-    #reference_docx: LPD_MS_styles.docx
+    reference_docx: /Users/xavi_rp/Documents/D6_LPD/LPD/ATBD/LPD_MS_styles.docx
     #toc: true #table of content true
     toc_depth: 3  #up to three depths of headings (specified by #, ## and ###)
     #number_sections: true  #number sections at each table header
@@ -45,6 +45,7 @@ if(Sys.info()[4] == "D01RI1700371"){
   stop("Define your machine before to run LPD")
 }
 
+load(file = paste0(path2save, "/ResampleResults4Report.RData"))
 
 table_num <- captioner::captioner(prefix = "Table")
 fig_num <- captioner::captioner(prefix = "Figure")
@@ -52,24 +53,89 @@ fig_num <- captioner::captioner(prefix = "Figure")
 ```
 
 
+# Introduction
+
 ```{r include = FALSE}
 fig0_1km <- fig_num(name = "f0_1km_300", caption = "Working NDVI maps at 1km and 333m resolution, respectively")
 orig_mapsCat <- paste0(path2save, "/ndvi1km_300m_Cat.jpg")
+
+fig_300mErr <- fig_num(name = "f_300mErr", caption = paste0("In red, pixels set as values between 251 and 255 (flagged values) in the NetCDF file at 333m resolution (NDVI original values: ", cuttoff_NA_err, " - 0.9360001)"))
+map_300mErr <- paste0(path2save, "/ndvi300m_kk.jpg")
 
 
 ```
 
 
-This is a document to show different options for the resampling of Land products (https://land.copernicus.eu/) from 333m to 1km using R functions and packages. Some comparison of the performance of several methods are also provided.
+This is a document to show different options for resampling Land products (https://land.copernicus.eu/), originally at 333m, to a 1km resolution using R functions and packages. Some comparison of the performance of several methods are also provided.
 
-The analisys is done using a subset of the 10-daily Normalized Difference Vegetation Index global product downloaded from the Copernicus Global Land Product portal (https://land.copernicus.eu/global/products/ndvi). The selected images are from 11^th^August 2019 and the working maps are cut between the coordinates (DD) Xmin = 0, Xmax = 4, Ymin = 40, Ymax = 43. See `r fig_num("f0_1km_300", display = "cite")` for the two working maps at 1km and 333m resolution, respectively. 
+The analysis is done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product downloaded from the Copernicus Global Land Product portal (https://land.copernicus.eu/global/products/ndvi). The selected images were taken the 11^th^ August 2019 and the working maps are cut between the coordinates (DD) Xmin = 0, Xmax = 4, Ymin = 40, Ymax = 43. See `r fig_num("f0_1km_300", display = "cite")` for the two working maps at 1km and 333m resolution, respectively. 
 
 
 ![`r fig0_1km`](`r orig_mapsCat`)
 
 
+In the original NetCDF file downloaded from the portal, some pixels are flagged and they have been assigned values between 251 and 255. They are usually water bodies or NoData, and correspond to NDVI values bigger than `r cuttoff_NA_err`. These pixels can be seen in `r fig_num("f_300mErr", display = "cite")`.
+
+![`r fig_300mErr`](`r map_300mErr`)
+
+
+There are several approaches to resample data to a coarser resolution. They could be grouped into area-based aggregation methods and point-based interpolation methods (e.g. bilinear and nearest neighbour) and can be applied depending on the data type, etc. 
 
 
 
+
+# Bilinear method. Function *resample()* 
+
+```{r include = FALSE}
+fig300m_rsampled1km <- fig_num(name = "f_300m_rsampled1km", caption = "Map at 1km resolution resampled from 333m using the bilinear approach")
+map_300m_rsampled1km <- paste0(path2save, "/ndvi300m_rsampled1km.jpg")
+
+figResampleCorr <- fig_num(name = "f_ResampleCorr", caption = "Scatterplot of the observed 1km resolution NDVI image (x-axis) against the resampled one from the 333m resolution image (y-axis). Also Pearson correlation coefficient (Pearson's *r*)")
+ResampleCorr <- paste0(path2save, "/resample_correlation.jpg")
+
+figResampleCorr <- fig_num(name = "f_ResampleCorr", caption = "Scatterplot of the observed 1km resolution NDVI image (x-axis) against the resampled one from the 333m resolution image (y-axis). Also Pearson correlation coefficient (Pearson's *r*)")
+ResampleCorr <- paste0(path2save, "/resample_correlation.jpg")
+
+figResampleOverpred <- fig_num(name = "f_ResampleOverpred", caption = "Map showing over-predicted pixels after being resampled using the bilinear approach")
+ResampleOverpred <- paste0(path2save, "/ndvi300m_rsampled1km_badResamplingHigh.jpg")
+
+figResampleUnderpred <- fig_num(name = "f_ResampleUnderpred", caption = "Map showing under-predicted pixels after being resampled using the bilinear approach")
+ResampleUnderpred <- paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow.jpg")
+
+```
+
+
+The function *resample()*, from the R package *raster*, interpolates the finer raster using as a reference a coarser raster, in this case the 1km global product. Doing so, the user does not need to expand the final map in a subsequent step after resampling, to match the extent of the 1km global product, filling the space with NoData or any other required value. *resample()* can make the job either using the bilinear or the nearest neighbour (NGB) methods. We will be focused on the former as the NGB method is best used for categorical data interpolation. 
+
+The bilinear method averages the four closer pixels to the centre of the pixels of the new coarser raster, which is passed as an input to the function *resample()*. The result (`r fig_num("f_300m_rsampled1km", display = "cite")`) is a raster with the same extent and resolution than the coarser input. 
+
+
+![`r fig300m_rsampled1km`](`r map_300m_rsampled1km`)
+
+
+
+The `r fig_num("f_ResampleCorr", display = "cite")` shows quite good correlation between the observed 1km resolution NDVI image (x-axis) with the resampled one to 1km from the 333m resolution image (y-axis) using *resample()* with the bilinear method. The Pearson correlation coefficient (Pearson's *r*) is `r rsmpl_df_pearson`. Those points observed in `r fig_num("f_ResampleCorr", display = "cite")` with very bad resampling results, either with high over-prediction or high under-prediction, correspond to those close to flagged pixels in the original NetCDF file (i.e. missing or NoData, etc). This flagged pixels have large NDVI values (bigger than `r cuttoff_NA_err`), and this is why they highly influence the average calculation, giving bad resampling results. However, they only represent the `r as.vector(badResamplingHighProp + badResamplingLowProp)`% of total pixels. As seen in `r fig_num("f_ResampleOverpred", display = "cite")` and `r fig_num("f_ResampleUnderpred", display = "cite")`, for over-prediction and under-prediction respectively, much of these pixels are close to the coastline.
+
+![`r figResampleCorr`](`r ResampleCorr`)
+
+![`r figResampleOverpred`](`r ResampleOverpred`)
+
+![`r figResampleUnderpred`](`r ResampleUnderpred`)
+
+
+
+
+
+
+# Aggregation method. Function *aggregate()* 
+
+
+One of the main limitations of this function is that the user needs to subsequently expand the resulting map to match with the 1km global product. This step might produce some problems with the resulting maps' extents if further analisys need to be done.
+
+
+
+# Conclusions
+
+An R-based tool to perform resampling could be easily developed in order to be shared with the Copernicus Global Land Product portal users to help them process themselves the data sets after being downloaded. As a limitation of such a tool would likely be related to its high resource dependency in terms of CPU memory to deal with global NetCDF files **(It might be more efficient with tiff images, but I need to check!!)**. But, in any case, it could be useful for smaller subsets of data.
 
 
