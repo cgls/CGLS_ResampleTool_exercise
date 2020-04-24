@@ -400,7 +400,7 @@ dev.off()
 
 
 # Mapping underpredictions 
-jpeg(paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow_Agrr.jpg"))
+jpeg(paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow_Aggr.jpg"))
 rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df_Aggr$badResamplingLow))
 plot(rstr2plot, main = paste0("NDVI observed 1km > ", round(cuttoff_NA_err, 4), "\n and predicted <= ", round(cuttoff_NA_err, 4)), 
      legend = FALSE, col = c("green", "red"), cex.main = 1.3)
@@ -416,7 +416,7 @@ rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df_Aggr$badResamplingHigh))
 plot(rstr2plot, main = paste0("NDVI observed 1km <= ", round(cuttoff_NA_err, 4), "\n and predicted > ", round(cuttoff_NA_err, 4)), 
      legend = FALSE, col = c("green", "red"), cex.main = 1.3)
 text(x = 2, y = 39.5, 
-     label = paste0("Proportion of overpredicted pixels: ", badResamplingHighProp_Agrr, "%"), 
+     label = paste0("Proportion of overpredicted pixels: ", badResamplingHighProp_Aggr, "%"), 
      cex = 1.2, col = "red", xpd = TRUE)
 dev.off()
 

@@ -19,7 +19,6 @@ output:
 #csl: methods-in-ecology-and-evolution.csl
 always_allow_html: yes
 
-
 ---
 
 
@@ -53,6 +52,16 @@ fig_num <- captioner::captioner(prefix = "Figure")
 ```
 
 
+**Abstract**
+
+- Assessment of different methods and R-based tools for resampling Land Products (https://land.copernicus.eu/) at 333m to 1km resolution.
+- "Bilinear" is a point-based interpolation method which averages the 4 closest pixels to the centre of the new larger cell. Instead, "Aggregation" is an area-based method which computes averages over all the pixels grouped in the new cell, 9 in this case 
+- Both methods give similar and good results compared with unprocessed images at 1km (Pearson's *r*: `r round(rsmpl_df_pearson, 3)` and `r round(rsmpl_df_Aggr_pearson, 3)` for "Bilinear" and "Aggregation" respectively)
+- An R-based tool to perform these resampling methods could be developed in order to be shared with the Copernicus Global Land Product portal users to help them with the process of resampling 
+- Although such tool might find some limitations related to CPU memory to deal with global NetCDF files, it still might be useful for local to regional studies.
+
+
+
 # Introduction
 
 ```{r include = FALSE}
@@ -66,7 +75,7 @@ map_300mErr <- paste0(path2save, "/ndvi300m_kk.jpg")
 ```
 
 
-This is a document to show different options for resampling Land products (https://land.copernicus.eu/), originally at 333m, to a 1km resolution using R functions and packages. Some comparison of the performance of several methods are also provided.
+This is a document to show different options for resampling Land Products (https://land.copernicus.eu/), originally at 333m, to a 1km resolution using R functions and packages. Some comparison of the performance of several methods are also provided.
 
 The analysis is done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product downloaded from the Copernicus Global Land Product portal (https://land.copernicus.eu/global/products/ndvi). The selected images were taken the 11^th^ August 2019 and the working maps are cut between the coordinates (DD) Xmin = 0, Xmax = 4, Ymin = 40, Ymax = 43. See `r fig_num("f0_1km_300", display = "cite")` for the two working maps at 1km and 333m resolution, respectively. 
 
@@ -79,7 +88,7 @@ In the original NetCDF file downloaded from the portal, some pixels are flagged 
 ![`r fig_300mErr`](`r map_300mErr`)
 
 
-There are several approaches to resample data to a coarser resolution. They could be grouped into area-based aggregation methods and point-based interpolation methods (e.g. bilinear and nearest neighbour) and can be applied depending on the data type, etc. 
+There are several approaches to resample data to a coarser resolution. They could be grouped into area-based aggregation methods and point-based interpolation methods (e.g. Bilinear and Nearest Neighbour) and can be applied depending on the data type, etc. 
 
 
 
@@ -87,34 +96,32 @@ There are several approaches to resample data to a coarser resolution. They coul
 # Bilinear method. Function *resample()* 
 
 ```{r include = FALSE}
-fig300m_rsampled1km <- fig_num(name = "f_300m_rsampled1km", caption = "Map at 1km resolution resampled from 333m using the bilinear approach")
+fig300m_rsampled1km <- fig_num(name = "f_300m_rsampled1km", caption = "Map at 1km resolution resampled from 333m using the Bilinear approach")
 map_300m_rsampled1km <- paste0(path2save, "/ndvi300m_rsampled1km.jpg")
 
-figResampleCorr <- fig_num(name = "f_ResampleCorr", caption = "Scatterplot of the observed 1km resolution NDVI image (x-axis) against the resampled one from the 333m resolution image (y-axis). Also Pearson correlation coefficient (Pearson's *r*)")
+figResampleCorr <- fig_num(name = "f_ResampleCorr", caption = "Scatterplot of the observed 1km resolution NDVI image (x-axis) against the resampled one from the 333m resolution image (y-axis) using the Bilinear approach. Also Pearson correlation coefficient (Pearson's *r*)")
 ResampleCorr <- paste0(path2save, "/resample_correlation.jpg")
 
-figResampleCorr <- fig_num(name = "f_ResampleCorr", caption = "Scatterplot of the observed 1km resolution NDVI image (x-axis) against the resampled one from the 333m resolution image (y-axis). Also Pearson correlation coefficient (Pearson's *r*)")
-ResampleCorr <- paste0(path2save, "/resample_correlation.jpg")
 
-figResampleOverpred <- fig_num(name = "f_ResampleOverpred", caption = "Map showing over-predicted pixels after being resampled using the bilinear approach")
+figResampleOverpred <- fig_num(name = "f_ResampleOverpred", caption = "Map showing over-predicted pixels after being resampled using the Bilinear approach")
 ResampleOverpred <- paste0(path2save, "/ndvi300m_rsampled1km_badResamplingHigh.jpg")
 
-figResampleUnderpred <- fig_num(name = "f_ResampleUnderpred", caption = "Map showing under-predicted pixels after being resampled using the bilinear approach")
+figResampleUnderpred <- fig_num(name = "f_ResampleUnderpred", caption = "Map showing under-predicted pixels after being resampled using the Bilinear approach")
 ResampleUnderpred <- paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow.jpg")
 
 ```
 
 
-The function *resample()*, from the R package *raster*, interpolates the finer raster using as a reference a coarser raster, in this case the 1km global product. Doing so, the user does not need to expand the final map in a subsequent step after resampling, to match the extent of the 1km global product, filling the space with NoData or any other required value. *resample()* can make the job either using the bilinear or the nearest neighbour (NGB) methods. We will be focused on the former as the NGB method is best used for categorical data interpolation. 
+The function *resample()*, from the R package *raster*, interpolates the finer raster using as a reference a coarser raster, in this case the 1km global product. Doing so, the user does not need to expand the final map in a subsequent step after resampling, to match the extent of the 1km global product, filling the space with NoData or any other required value. *resample()* can make the job either using the Bilinear or the Nearest Neighbour (NGB) methods. We will be focused on the former as the NGB method is best used for categorical data interpolation. 
 
-The bilinear method averages the four closer pixels to the centre of the pixels of the new coarser raster, which is passed as an input to the function *resample()*. The result (`r fig_num("f_300m_rsampled1km", display = "cite")`) is a raster with the same extent and resolution than the coarser input. 
+The Bilinear method averages the four closer pixels to the centre of the pixels of the new coarser raster, which is passed as an input to the function *resample()*. The result (`r fig_num("f_300m_rsampled1km", display = "cite")`) is a raster with the same extent and resolution than the coarser input. 
 
 
 ![`r fig300m_rsampled1km`](`r map_300m_rsampled1km`)
 
 
 
-The `r fig_num("f_ResampleCorr", display = "cite")` shows quite good correlation between the observed 1km resolution NDVI image (x-axis) with the resampled one to 1km from the 333m resolution image (y-axis) using *resample()* with the bilinear method. The Pearson correlation coefficient (Pearson's *r*) is `r rsmpl_df_pearson`. Those points observed in `r fig_num("f_ResampleCorr", display = "cite")` with very bad resampling results, either with high over-prediction or high under-prediction, correspond to those close to flagged pixels in the original NetCDF file (i.e. missing or NoData, etc). This flagged pixels have large NDVI values (bigger than `r cuttoff_NA_err`), and this is why they highly influence the average calculation, giving bad resampling results. However, they only represent the `r as.vector(badResamplingHighProp + badResamplingLowProp)`% of total pixels. As seen in `r fig_num("f_ResampleOverpred", display = "cite")` and `r fig_num("f_ResampleUnderpred", display = "cite")`, for over-prediction and under-prediction respectively, much of these pixels are close to the coastline.
+The `r fig_num("f_ResampleCorr", display = "cite")` shows quite good correlation between the observed 1km resolution NDVI image (x-axis) and the resampled one to 1km from the 333m resolution image (y-axis) using *resample()* with the Bilinear method. The Pearson correlation coefficient (Pearson's *r*) is `r rsmpl_df_pearson`. Those points observed in `r fig_num("f_ResampleCorr", display = "cite")` with very bad resampling results, either with high over-prediction or high under-prediction, correspond to those close to flagged pixels in the original NetCDF file (i.e. missing or NoData, etc). This flagged pixels have large NDVI values (bigger than `r cuttoff_NA_err`), and this is why they highly influence the average calculation, giving bad resampling results. However, they only represent the `r as.vector(badResamplingHighProp + badResamplingLowProp)`% of total pixels. As seen in `r fig_num("f_ResampleOverpred", display = "cite")` and `r fig_num("f_ResampleUnderpred", display = "cite")`, for over-prediction and under-prediction respectively, much of these pixels are close to the coastline.
 
 ![`r figResampleCorr`](`r ResampleCorr`)
 
@@ -129,13 +136,46 @@ The `r fig_num("f_ResampleCorr", display = "cite")` shows quite good correlation
 
 # Aggregation method. Function *aggregate()* 
 
+```{r include = FALSE}
+fig300m_rsampled1km_Aggr <- fig_num(name = "f_300m_rsampled1km_Aggr", caption = "Map at 1km resolution resampled from 333m using the aggregation approach")
+map_300m_rsampled1km_Aggr <- paste0(path2save, "/ndvi300m_rsampled1km_Aggr.jpg")
 
-One of the main limitations of this function is that the user needs to subsequently expand the resulting map to match with the 1km global product. This step might produce some problems with the resulting maps' extents if further analisys need to be done.
+figResampleCorr_Aggr <- fig_num(name = "f_ResampleCorr_Aggr", caption = "Scatterplot of the observed 1km resolution NDVI image (x-axis) against the resampled one from the 333m resolution image (y-axis) using the aggregation approach. Also Pearson correlation coefficient (Pearson's *r*)")
+ResampleCorr_Aggr <- paste0(path2save, "/resample_correlation_Aggr.jpg")
+
+figResampleOverpred_Aggr <- fig_num(name = "f_ResampleOverpred_Aggr", caption = "Map showing over-predicted pixels after being resampled using the aggregation approach")
+ResampleOverpred_Aggr <- paste0(path2save, "/ndvi300m_rsampled1km_badResamplingHigh_Aggr.jpg")
+
+figResampleUnderpred_Aggr <- fig_num(name = "f_ResampleUnderpred_Aggr", caption = "Map showing under-predicted pixels after being resampled using the aggregation approach")
+ResampleUnderpred_Aggr <- paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow_Aggr.jpg")
+
+```
+
+
+The aggregation method groups rectangular areas of pixels of the finer resolution image to create a new map with larger cells. To do that, the function *aggregate()* of the package *raster* needs to know the factor of aggregation. In this case, the factor is 3 as it needs to go from 333m to 1 km. In addition, *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()* or *min()*. One of the main limitations of this function is that the user needs to subsequently expand the resulting map to match with the 1km global product. This step might produce some problems with the resulting maps' extents if further analisys need to be done. `r fig_num("f_300m_rsampled1km_Aggr", display = "cite")` show the resulting map after performing the aggregation and the expansion.
+
+
+![`r fig300m_rsampled1km_Aggr`](`r map_300m_rsampled1km_Aggr`)
+
+
+
+The `r fig_num("f_ResampleCorr_Aggr", display = "cite")` shows quite good correlation between the observed 1km resolution NDVI image (x-axis) and the resampled one to 1km from the 333m resolution image (y-axis) using *aggragate()*. The Pearson correlation coefficient (Pearson's *r*) is `r rsmpl_df_Aggr_pearson`, slightly better that the one got using the Bilinear approach (`r rsmpl_df_pearson`). Similarly to Bilinear, `r fig_num("f_ResampleCorr_Aggr", display = "cite")` shows some very bad aggregated results, which also correspond to those pixels close to flagged pixels in the original NetCDF file (i.e. missing or NoData, etc). However, as more pixels are taken to compute the average (9 in this case, 4 for the Bilinear), it is more likely to found groups with more flagged pixels (bigger than `r cuttoff_NA_err`) close to the coastline than inland. This fact makes that it models slightly better than Bilinear inland, but slightly worst in the coastline, although in general terms the proportion of very bad predictions over the total of pixels for both methods are similar (`r as.vector(badResamplingHighProp + badResamplingLowProp)`% vs. `r as.vector(badResamplingHighProp_Aggr + badResamplingLowProp_Aggr)`%, for Bilinear and Aggregation respectively). This patterns can be seen in `r fig_num("f_ResampleOverpred_Aggr", display = "cite")` and `r fig_num("f_ResampleUnderpred_Aggr", display = "cite")`, for over-prediction and under-prediction respectively.
+
+
+![`r figResampleCorr_Aggr`](`r ResampleCorr_Aggr`)
+
+![`r figResampleOverpred_Aggr`](`r ResampleOverpred_Aggr`)
+
+![`r figResampleUnderpred_Aggr`](`r ResampleUnderpred_Aggr`)
+
+
 
 
 
 # Conclusions
 
-An R-based tool to perform resampling could be easily developed in order to be shared with the Copernicus Global Land Product portal users to help them process themselves the data sets after being downloaded. As a limitation of such a tool would likely be related to its high resource dependency in terms of CPU memory to deal with global NetCDF files **(It might be more efficient with tiff images, but I need to check!!)**. But, in any case, it could be useful for smaller subsets of data.
+The assessment of both methods (Bilinear and aggregation) give similar and good results in general terms. Therefore, in this sense, both can be equally recommended to resample the NDVI products from https://land.copernicus.eu/ at 333m to 1km resolution. This assessment, however, has been made with a small subsample of the images. Therefore, for bigger maps there could be some differences regarding processing time due to the fact that the aggregation method needs to be done in several steps and the average is calculated over a larger number of pixels. Parallel processing should definitely be addressed for resamplings at global scale. 
+
+An R-based tool to perform the resampling assessed in this document could be easily developed in order to be shared with the Copernicus Global Land Product portal users to help them to process themselves the data sets after being downloaded. A limitation of such tool would likely be related to its high resource dependency in terms of CPU memory to deal with global NetCDF files **(It might be more efficient with tiff images, but I need to check!!)**. But, in any case, it could be useful for smaller subsets of data.
 
 
