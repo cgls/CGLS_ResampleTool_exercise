@@ -1,0 +1,129 @@
+---
+title: "NDVI Resampling using R-based tools (2)"
+subtitle: "Dealing with 'flagged values'"
+
+author: "Xavier Rotllan-Puig"
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+output: 
+  word_document:
+    reference_docx: /Users/xavi_rp/Documents/D6_LPD/LPD/ATBD/LPD_MS_styles.docx
+    #toc: true #table of content true
+    toc_depth: 3  #up to three depths of headings (specified by #, ## and ###)
+    #number_sections: true  #number sections at each table header
+    #theme: united  #options for theme
+    #highlight: tango  #syntax highlighting style
+    #css: style.css   #custom css, should be in same folder. Only for HTML
+    #pandoc_args:
+    #  - --lua-filter=scholar-metadata.lua
+    #  - --lua-filter=author-info-blocks.lua
+      
+#bibliography: lpd_biblio.bib
+#csl: methods-in-ecology-and-evolution.csl
+always_allow_html: yes
+
+---
+
+
+```{r setup, include = FALSE, results='asis'}
+library(knitr)
+library(pander)
+library(captioner)
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+
+```{r include = FALSE}
+if(Sys.info()[4] == "D01RI1700371"){
+  path2data <- "E:/rotllxa/NDVI_resample/NDVI_data"
+  path2save <- "E:/rotllxa/NDVI_resample/NDVI_resample"
+}else if(Sys.info()[4] == "h05-wad.ies.jrc.it"){
+  path2data <- ""
+  path2save <- ""
+}else if(Sys.info()[4] == "MacBook-MacBook-Pro-de-Xavier.local"){
+  path2data <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_data"
+  path2save <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample"
+}else{
+  stop("Define your machine before to run LPD")
+}
+
+load(file = paste0(path2save, "/ResampleResults4Report.RData"))
+
+table_num <- captioner::captioner(prefix = "Table")
+fig_num <- captioner::captioner(prefix = "Figure")
+#ts <- 0
+```
+
+**Abstract**
+
+- Assessment of the effect of *removing “flagged values”* on the resampling process of Land Products (https://land.copernicus.eu/) at 333m to 1km resolution
+- The results on the resampling process slightly *improve* for both methods assessed (Bilinear and Aggregation)
+
+
+
+# Introduction
+
+"Flagged values" are those pixels in the NDVI images corresponding to water bodies, missing data, errors, etc. They have NDVI values > `r round(cuttoff_NA_err, 4)`, or assigned values in the NetCDF between 251 and 255.
+
+One might want to "remove" them from the resampling process as their big values are highly influencing the averages calculated for all resampling methods assessed in the previous document ("NDVI Resampling using R-based tools"), driving to wrong predictions.
+
+The way to remove them from the resampling, in R-based methods, is transforming them into NA (i.e. No Data). However, R-based functions might deal differently with such NA values in their calculations. On the one hand, they can make the calculations avoiding the NA values. For instance, the mean of four values, say 0.45, 0.45, 0.45 and NA, results in an average of 0.45. On the other hand, in other functions the average of the same four values results in NA if the function does not deal with NAs. The implications of this difference for the resampling exercise are that, in the first case, we have a "resampled value" in the new raster, whereas we do not have any value in the second case (i.e. we have NA for that pixel). 
+
+Therefore, what has been done is to repeat the two resampling approaches shown in the previous document after substituting the "flagged values" with NA, and check the new maps and Pearson correlation coefficients for the resamplings.
+
+
+
+# Bilinear method with *resample()* function
+```{r include = FALSE}
+figResampleCorr_1 <- fig_num(name = "f_ResampleCorr_1", caption = "Scatterplot unprocessed (x-axis) against resampled (y-axis) using the Bilinear approach without previously reclassifying NAs. Also Pearson's *r* is shown")
+
+
+figResampleCorr_2 <- fig_num(name = "f_ResampleCorr_2", caption = "Scatterplot unprocessed (x-axis) against resampled (y-axis) using the Bilinear approach after previously reclassifying NAs. Also Pearson's *r* is shown")
+
+
+```
+
+
+*resample()* function does not deal with NA. This means that when there is a "flagged value" in the 333m resolution map, the result will be NA in the resampled map for that cell. As there are not many "flagged values" inland on the working maps at 333m resolution, both the new map at 1km and the Pearson's *r* are quite similar.
+
+There are 1299 more NA pixels ("flagged values") in the new resampled 1km map than in the original unprocessed 1km-resolution image, over a total of c. 75000 pixels corresponding to land (152100 total cells). In addition, there are 856 NA pixels in the unprocessed 1km image which have values in the resampled 1km image due to the fact that their values in the 333m image are not flagged. These differences make not big improvements in the Pearson's *r*, going from 0.9636 to 0.9638, as seen in  `r fig_num("f_ResampleCorr_1", display = "cite")` and `r fig_num("f_ResampleCorr_2", display = "cite")` without and after reclassifying the "flagged values" into Nas, respectively.
+
+
+![`r figResampleCorr_1`](`r paste0(path2save, "/v1_withNAs/resample_correlation.jpg")`)
+
+
+![`r figResampleCorr_2`](`r paste0(path2save, "/resample_correlation.jpg")`)
+
+
+Despite *resample()* does not deal with NAs, the source code of the function could be modified in order to accept keeping NA values out of the average calculation. Doing so, resampled values would be predicted in those cases where at least one cell of the 333m map has a regular value. However, this would mean that with only one out of nine pixels being a value would drive to have a resampled value. Therefore, this option needs to be taken cautiously.
+
+
+
+
+
+# Aggregation method with *aggregate()* function
+```{r include = FALSE}
+figResampleCorr_Aggr_1 <- fig_num(name = "f_ResampleCorr_Aggr_1", caption = "Scatterplot unprocessed (x-axis) against resampled (y-axis) using the Aggregation approach without previously reclassifying NAs. Also Pearson's *r* is shown")
+
+
+figResampleCorr_Aggr_2 <- fig_num(name = "f_ResampleCorr_Aggr_2", caption = "Scatterplot unprocessed (x-axis) against resampled (y-axis) using the Aggregation approach after previously reclassifying NAs. Also Pearson's *r* is shown")
+
+
+```
+
+*aggregate()* function has the option to avoid NAs for the calculation of averages, etc. However, as mentioned in the previous section, given that there are not many "flagged values" inland on the working 333m maps, Pearson correlation coefficient does not improve very much, although such improvement is a bit bigger than for the *resample()* option. As seen in  `r fig_num("f_ResampleCorr_Aggr_1", display = "cite")` and `r fig_num("f_ResampleCorr_Aggr_2", display = "cite")`, Pearson's *r* are 0.9756 and 0.9871, without reclassifying the "flagged values" into NAs and doing so, respectively.
+
+
+![`r figResampleCorr_1`](`r paste0(path2save, "/v1_withNAs/resample_correlation_Aggr.jpg")`)
+
+
+![`r figResampleCorr_2`](`r paste0(path2save, "/resample_correlation_Aggr.jpg")`)
+
+
+
+
+# Conclusions
+
+Observing the plots and Pearson correlation coefficients reported in this document, it seems like the effect of avoiding "flagged values" (after reclassifying them to NA) for the resampling process might slightly improve the results, especially for the Aggregation approach.
+

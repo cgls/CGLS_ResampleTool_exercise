@@ -48,7 +48,7 @@ ndvi1km <- ndvi1km_backup
 
 
 ## Subsetting
-subsetting <- "yes"  
+subsetting <- "yes"  # I think it does not work
 if(subsetting == "yes"){
   Xmin <- 0 # coords where to cut (in deg)
   Xmax <- 4
@@ -202,50 +202,17 @@ nc_close(nc)
 
 
 
-## Dealing with "flagged values" ####
-# "flagged values" are those corresponding to water bodies, NAs, etc. 
-# They have NDVI values > cuttoff_NA_err (0.9176471), or assigned values in the NetCDF between 251 and 255.
-# We might want to "remove" them from the average calculations as they are highly influencing such averages,
-# driving to wrong predictions.
-#
-# 
-summary(ndvi1km_rstr)
-sum(is.na(as.data.frame(ndvi1km_rstr)))
-sum(as.data.frame(ndvi1km_rstr) > cuttoff_NA_err)
-
-ndvi1km_rstr[ndvi1km_rstr > cuttoff_NA_err] <- NA
-sum(is.na(as.data.frame(ndvi1km_rstr)))
-sum(as.data.frame(ndvi1km_rstr) > cuttoff_NA_err, na.rm = T)
-summary(ndvi1km_rstr)
-
-
-summary(ndvi300m_rstr)
-ndvi300m_rstr[ndvi300m_rstr > cuttoff_NA_err] <- NA
-sum(is.na(as.data.frame(ndvi300m_rstr)))
-nrow(as.data.frame(ndvi300m_rstr))
-
-
-
-
-
-
 ## Resampling using the Bilinear approach ####
 
 summary(ndvi1km_rstr)
 summary(ndvi300m_rstr)
 
-
-
 ndvi300m_rsampled1km <- resample(ndvi300m_rstr, ndvi1km_rstr, 
-                                 #na.rm = TRUE,
                                  method = "bilinear", 
-                                 filename = paste0(path2save, "/ndvi300m_rsampled1km.tif"),
-                                 overwrite = TRUE)
+                                 filename = paste0(path2save, "/ndvi300m_rsampled1km.tif"))
 #ndvi300m_rsampled1km <- raster(paste0(path2save, "/ndvi300m_rsampled1km.tif"))
-ndvi300m_rsampled1km_noNAs <- ndvi300m_rsampled1km
 ndvi300m_rsampled1km
 summary(ndvi300m_rsampled1km)
-summary(ndvi300m_rsampled1km_noNAs)
 nrow(as.data.frame(ndvi300m_rsampled1km))
 
 jpeg(paste0(path2save, "/ndvi300m_rsampled1km.jpg"))
@@ -255,7 +222,6 @@ dev.off()
 
 
 rsmpl_df <- data.frame(as.vector(ndvi1km_rstr), as.vector(ndvi300m_rsampled1km))
-head(rsmpl_df)
 str(rsmpl_df)
 nrow(rsmpl_df)
 summary(rsmpl_df$as.vector.ndvi300m_rsampled1km.)
@@ -295,17 +261,11 @@ range(rsmpl_df[rsmpl_df$Err1km == "red", 1])
 
 rsmpl_df_pearson <- cor(rsmpl_df[complete.cases(rsmpl_df), 1:2], method = "pearson")[2, 1]
 
-sum(is.na(rsmpl_df$as.vector.ndvi1km_rstr.) & !is.na(rsmpl_df$as.vector.ndvi300m_rsampled1km.)) +
-  sum(!is.na(rsmpl_df$as.vector.ndvi1km_rstr.) & is.na(rsmpl_df$as.vector.ndvi300m_rsampled1km.))
-sum(!complete.cases(rsmpl_df[, 1:2]))
-sum(complete.cases(rsmpl_df[, 1:2]))
-nrow(rsmpl_df)
 
-
-jpeg(paste0(path2save, "/resample_correlation.jpg"))
+jpeg(paste0(path2save, "/resample_correlation_kk.jpg"))
 xyplot(rsmpl_df$as.vector.ndvi300m_rsampled1km. ~ rsmpl_df$as.vector.ndvi1km_rstr., type = c("p"),
-       #col = rsmpl_df$Err1km,
-       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))))
+       col = rsmpl_df$Err1km,
+       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson[2, 1], 4))))
 dev.off()
 
 
@@ -321,18 +281,7 @@ dev.off()
 jpeg(paste0(path2save, "/ndvi1km_Err.jpg"))
 rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df$Err1km))
 plot(rstr2plot, main = paste0("NDVI values > ", cuttoff_NA_err, " (NA, errors, etc)"), 
-     legend = FALSE, 
-     col = rev(c("blue", "white"))
-     )
-dev.off()
-
-
-
-jpeg(paste0(path2save, "/ndvi1km_1kmResampled.jpg"),
-     width = 22, height = 14, units = "cm", res = 300)
-par(mfrow = c(1, 2), mar = c(4, 4, 4, 5))
-plot(ndvi1km_rstr, main = "NDVI 1km")
-plot(ndvi300m_rsampled1km, main = "NDVI 1km (resampled)") 
+     legend = FALSE, col = c("blue", "white"))
 dev.off()
 
 
@@ -343,7 +292,7 @@ dev.off()
 jpeg(paste0(path2save, "/ndvi300m_rsampled1km_badResamplingLow.jpg"))
 rstr2plot <- setValues(ndvi1km_rstr, as.factor(rsmpl_df$badResamplingLow))
 plot(rstr2plot, main = paste0("NDVI observed 1km > ", round(cuttoff_NA_err, 4), "\n and predicted <= ", round(cuttoff_NA_err, 4)), 
-     legend = FALSE, col = rev(c("green", "red")), cex.main = 1.3)
+     legend = FALSE, col = c("green", "red"), cex.main = 1.3)
 #plot(map_countr, add =TRUE)
 text(x = 2, y = 39.5, 
      label = paste0("Proportion of underpredicted pixels: ", badResamplingLowProp, "%"), 
@@ -385,8 +334,7 @@ ndvi300m_rsampled1km_Aggr <- aggregate(ndvi300m_rstr,
                                       fun = mean, 
                                       expand = TRUE, 
                                       na.rm = TRUE, 
-                                      filename = paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"),
-                                      overwrite = TRUE)
+                                      filename = paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"))
 
 #ndvi300m_rsampled1km_Aggr <- raster(paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"))
 ndvi300m_rsampled1km_Aggr
