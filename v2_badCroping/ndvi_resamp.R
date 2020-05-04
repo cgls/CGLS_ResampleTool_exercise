@@ -106,7 +106,6 @@ dev.off()
 ## Saving as a raster file (tiff)
 ndvi1km_rstr <- raster(t(ndvi1km[, seq(338, 1, -1)]))
 extent(ndvi1km_rstr) <- c(range(lon),  range(lat))
-#crs(ndvi1km_rstr) <- CRS('+init=EPSG:4326')
 ndvi1km_rstr
 writeRaster(ndvi1km_rstr, paste0(path2save, "/ndvi1km_Cat.tif"), overwrite = TRUE)
 ndvi1km_rstr <- raster(paste0(path2save, "/ndvi1km_Cat.tif"))
@@ -167,7 +166,6 @@ summary(lat)
 #range(time) 
 
 
-
 ndvi300m <- ncvar_get(nc, "NDVI", start = c(55000, 10000), count = c(15000, 7000))
 dim(ndvi300m)
 str(ndvi300m)
@@ -176,26 +174,22 @@ ndvi300m_backup <- ndvi300m
 ndvi300m <- ndvi300m_backup
 
 
-## Subsetting (notice that cutting 300m with the same coords will NOT fit exactly with the 1km just subset, it needs to be adjusted)
+## Subsetting (noticed that this 300m will NOT fit exactly with the 1km just subset, it needs to be cropped before resampling)
 if(subsetting == "yes"){
   Xmin <- 0 # coords where to cut (in deg)
   Xmax <- 4
   Ymin <- 40
   Ymax <- 43
-  #Xmin <- -0.4 # coords where to cut (in deg). Must be bigger than for 1km, otherwise it can't be cropped later
-  #Xmax <- 4.4
-  #Ymin <- 38.6
-  #Ymax <- 43.4
   
-  x0 <-   floor((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmin)) - 5   # adjusting to cut exaclty at the same cols than 1km
-  x1 <- ceiling((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmax)) - 1  # adjusting to cut exaclty at the same cols than 1km
+  x0 <-   floor((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmin))
+  x1 <- ceiling((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmax))
   
-  y0 <-  dim(ndvi300m)[2] -  floor((dim(ndvi300m)[2] / (max(lat) - min(lat))) * (Ymin - abs(range(lat)[1])))  + 1  # adjusting to cut exaclty at the same row than 1km
-  y1 <-  dim(ndvi300m)[2] - ceiling((dim(ndvi300m)[2] / (max(lat) - min(lat))) * (Ymax - abs(range(lat)[1]))) - 3  # adjusting to cut exaclty at the same row than 1km
+  y0 <-  dim(ndvi300m)[2] -  floor((dim(ndvi300m)[2] / (max(lat) - min(lat))) * (Ymin - abs(range(lat)[1])))
+  y1 <-  dim(ndvi300m)[2] - ceiling((dim(ndvi300m)[2] / (max(lat) - min(lat))) * (Ymax - abs(range(lat)[1])))
   
   ndvi300m <- ndvi300m[x0:x1, y0:y1]
   dim(ndvi300m)
-  #str(ndvi300m)
+  str(ndvi300m)
   summary(as.vector(ndvi300m))
   
   lon <- lon[x0:x1]
@@ -209,27 +203,16 @@ image.plot(lon, lat, ndvi300m[,])
 dev.off()
 
 ## Saving as a raster file (tiff)
-#ndvi300m_rstr <- raster(extent(c(range(lon),  range(lat))), res = 1/336)
-#ndvi300m_rstr <- setValues(ndvi300m_rstr, t(ndvi300m[, seq(dim(ndvi300m)[2], 1, -1)]))
-ndvi300m_rstr <- raster(t(ndvi300m[, seq(dim(ndvi300m)[2], 1, -1)]))
-#crs(ndvi300m_rstr) <- CRS("+init=EPSG:4326")
+ndvi300m_rstr <- raster(t(ndvi300m[, seq(1010, 1, -1)]))
 extent(ndvi300m_rstr) <- c(range(lon),  range(lat))
-#res(ndvi300m_rstr) <- c(1/336, 1/336)
 ndvi300m_rstr
 writeRaster(ndvi300m_rstr, paste0(path2save, "/ndvi300m_Cat.tif"), overwrite = TRUE)
 ndvi300m_rstr <- raster(paste0(path2save, "/ndvi300m_Cat.tif"))
 
 ## Crop (Catalonia)
+
 #cat_extnt <- extent(c(0.3, 3.4, 40.4, 43))
 #crop(ndvi300m_rstr, cat_extnt, filename = paste0(path2save, "/ndvi300m_Cat.tif"))
-
-# Check if 300m fits exactly with the 1km product just subset
-extent(ndvi1km_rstr)   # Xmin have to coincide; Xmax(300m) = Xmax(1km) + 2*(1/336)
-extent(ndvi300m_rstr)  # Ymax have to coincide; Ymin(300m) = Ymin(1km) - 2*(1/336)
-ndvi300m_rstr
-dim(ndvi300m_rstr)  / dim(ndvi1km_rstr) #this has to be (3, 3, something)
-
-
 
 
 # Plotting NAs and flagged values map
@@ -256,7 +239,7 @@ nc_close(nc)
 # 
 summary(ndvi1km_rstr)
 sum(is.na(as.data.frame(ndvi1km_rstr)))
-sum(as.data.frame(ndvi1km_rstr) > cuttoff_NA_err, na.rm = TRUE)
+sum(as.data.frame(ndvi1km_rstr) > cuttoff_NA_err)
 
 ndvi1km_rstr[ndvi1km_rstr > cuttoff_NA_err] <- NA
 sum(is.na(as.data.frame(ndvi1km_rstr)))
@@ -421,10 +404,9 @@ save(list = stuff2save, file = paste0(path2save, "/ResampleResults4Report.RData"
 
 
 ## Resampling using the aggregation approach ####
+
 summary(ndvi1km_rstr)
 summary(ndvi300m_rstr)
-as.vector(extent(ndvi1km_rstr))
-as.vector(extent(ndvi300m_rstr))
 
 ndvi300m_rsampled1km_Aggr <- aggregate(ndvi300m_rstr,
                                       fact = 3, # from 333m to 1km  
@@ -437,15 +419,12 @@ ndvi300m_rsampled1km_Aggr <- aggregate(ndvi300m_rstr,
 #ndvi300m_rsampled1km_Aggr <- raster(paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"))
 ndvi300m_rsampled1km_Aggr
 summary(ndvi300m_rsampled1km_Aggr)
-nrow(as.data.frame(ndvi300m_rsampled1km))   
-nrow(as.data.frame(ndvi300m_rsampled1km_Aggr))
+nrow(as.data.frame(ndvi300m_rsampled1km_Aggr))   # 787 pixels have been lost!!!
 
 # Expanding the resulting map
-# As expanding is no longer necessary, probably a reprojection into the ndvi1km would be necessary due to a small
-# mismatch among resolution (not dimensions!), likely given to a rounding issue 
-#ndvi300m_rsampled1km_Aggr <- extend(ndvi300m_rsampled1km_Aggr, ndvi1km_rstr, value = NA, 
-#                                    filename = paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"),
-#                                    overwrite = TRUE)
+ndvi300m_rsampled1km_Aggr <- extend(ndvi300m_rsampled1km_Aggr, ndvi1km_rstr, value = NA, 
+                                    filename = paste0(path2save, "/ndvi300m_rsampled1km_Aggr.tif"),
+                                    overwrite = TRUE)
 
 
 jpeg(paste0(path2save, "/ndvi300m_rsampled1km_Aggr.jpg"))
