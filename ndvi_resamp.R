@@ -48,12 +48,35 @@ nc <- nc_open(paste0(path2data, "/", nc_file1km))
 nc
 str(nc)
 
+# Getting a subset containing the western-northern cell
+#lon <- ncvar_get(nc, "lon", start = c(1), count = c(40))
+#lat <- ncvar_get(nc, "lat", start = c(1), count = c(40))
+#ndvi1km <- ncvar_get(nc, "NDVI", start = c(1, 1, 1), count = c(40, 40, 1)) ; dim(ndvi1km)
+#range(lon)
+#range(lat)
+#min(lon, 7)
+#max(lat, 7)
+#
+# Getting a subset containing the eastern-southern cell
+#lon <- ncvar_get(nc, "lon", start = c(120950), count = c(11))
+#lat <- ncvar_get(nc, "lat", start = c(47030), count = c(11))
+#max(lon, 7)
+#min(lat, 7)
+#
+
+
 lon <- ncvar_get(nc, "lon")
 head(lon)
 summary(lon)
 lat <- ncvar_get(nc, "lat")
 head(lat)
 summary(lat)
+
+correct_coords <- "y"
+if(correct_coords == "y"){
+  lon <- lon - (1/112)/2
+  lat <- lat + (1/112)/2  
+}
 
 time <- ncvar_get(nc, "time")
 range(time) 
@@ -104,9 +127,11 @@ image.plot(lon, lat, ndvi1km[,])
 dev.off()
 
 ## Saving as a raster file (tiff)
-ndvi1km_rstr <- raster(t(ndvi1km[, seq(338, 1, -1)]))
-extent(ndvi1km_rstr) <- c(range(lon),  range(lat))
-#crs(ndvi1km_rstr) <- CRS('+init=EPSG:4326')
+
+ndvi1km_rstr <- raster(t(ndvi1km[, seq(length(lat), 1, -1)]))
+extent(ndvi1km_rstr) <- c(range(lon)[1], (range(lon)[2] + (1/112)),
+                          (range(lat)[1] - (1/112)), range(lat)[2])
+crs(ndvi1km_rstr) <- CRS('+init=EPSG:4326')
 ndvi1km_rstr
 writeRaster(ndvi1km_rstr, paste0(path2save, "/ndvi1km_Cat.tif"), overwrite = TRUE)
 ndvi1km_rstr <- raster(paste0(path2save, "/ndvi1km_Cat.tif"))
@@ -149,11 +174,18 @@ nc <- nc_open(paste0(path2data, "/", nc_file300m))
 nc
 str(nc)
 
-# Getting a subset containing the eastern-southern cell
-#lon <- ncvar_get(nc, "lon", start = c(1), count = c(960))
+# Getting a subset containing the western-northern cell
+#lon <- ncvar_get(nc, "lon", start = c(1), count = c(40))
 #lat <- ncvar_get(nc, "lat", start = c(1), count = c(40))
+#ndvi300m <- ncvar_get(nc, "NDVI", start = c(1, 1), count = c(40, 40)) 
 #min(lon, 7)
 #max(lat, 7)
+#
+# Getting a subset containing the eastern-southern cell
+#lon <- ncvar_get(nc, "lon", start = c(120950), count = c(11))
+#lat <- ncvar_get(nc, "lat", start = c(47030), count = c(11))
+#max(lon, 7)
+#min(lat, 7)
 #
 
 lon <- ncvar_get(nc, "lon", start = c(55000), count = c(15000))
@@ -166,14 +198,19 @@ summary(lat)
 #time <- ncvar_get(nc, "time")
 #range(time) 
 
+## Adjusting coordinates (as the original netCDF reports pixels' center and R works with upper-left corner)
+correct_coords <- "y"
+if(correct_coords == "y"){
+  lon <- lon - (1/336)/2
+  lat <- lat + (1/336)/2
+}
+
 
 
 ndvi300m <- ncvar_get(nc, "NDVI", start = c(55000, 10000), count = c(15000, 7000))
 dim(ndvi300m)
 str(ndvi300m)
 summary(as.vector(ndvi300m))
-ndvi300m_backup <- ndvi300m
-ndvi300m <- ndvi300m_backup
 
 
 ## Subsetting (notice that cutting 300m with the same coords will NOT fit exactly with the 1km just subset, it needs to be adjusted)
@@ -187,8 +224,8 @@ if(subsetting == "yes"){
   #Ymin <- 38.6
   #Ymax <- 43.4
   
-  x0 <-   floor((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmin)) - 5   # adjusting to cut exaclty at the same cols than 1km
-  x1 <- ceiling((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmax)) - 1  # adjusting to cut exaclty at the same cols than 1km
+  x0 <-   floor((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmin))    # adjusting to cut exaclty at the same cols than 1km
+  x1 <- ceiling((dim(ndvi300m)[1] / sum(abs(range(lon)))) * (abs(range(lon)[1]) + Xmax)) + 4  # adjusting to cut exaclty at the same cols than 1km
   
   y0 <-  dim(ndvi300m)[2] -  floor((dim(ndvi300m)[2] / (max(lat) - min(lat))) * (Ymin - abs(range(lat)[1])))  + 1  # adjusting to cut exaclty at the same row than 1km
   y1 <-  dim(ndvi300m)[2] - ceiling((dim(ndvi300m)[2] / (max(lat) - min(lat))) * (Ymax - abs(range(lat)[1]))) - 3  # adjusting to cut exaclty at the same row than 1km
@@ -209,13 +246,10 @@ image.plot(lon, lat, ndvi300m[,])
 dev.off()
 
 ## Saving as a raster file (tiff)
-#ndvi300m_rstr <- raster(extent(c(range(lon),  range(lat))), res = 1/336)
-#ndvi300m_rstr <- setValues(ndvi300m_rstr, t(ndvi300m[, seq(dim(ndvi300m)[2], 1, -1)]))
 ndvi300m_rstr <- raster(t(ndvi300m[, seq(dim(ndvi300m)[2], 1, -1)]))
-#crs(ndvi300m_rstr) <- CRS("+init=EPSG:4326")
-extent(ndvi300m_rstr) <- c(range(lon),  range(lat))
-#res(ndvi300m_rstr) <- c(1/336, 1/336)
-ndvi300m_rstr
+extent(ndvi300m_rstr) <- c(range(lon)[1], (range(lon)[2] + (1/336)),
+                           (range(lat)[1] - (1/336)), range(lat)[2])
+crs(ndvi300m_rstr) <- CRS('+init=EPSG:4326')
 writeRaster(ndvi300m_rstr, paste0(path2save, "/ndvi300m_Cat.tif"), overwrite = TRUE)
 ndvi300m_rstr <- raster(paste0(path2save, "/ndvi300m_Cat.tif"))
 
@@ -224,12 +258,10 @@ ndvi300m_rstr <- raster(paste0(path2save, "/ndvi300m_Cat.tif"))
 #crop(ndvi300m_rstr, cat_extnt, filename = paste0(path2save, "/ndvi300m_Cat.tif"))
 
 # Check if 300m fits exactly with the 1km product just subset
-extent(ndvi1km_rstr)   # Xmin have to coincide; Xmax(300m) = Xmax(1km) + 2*(1/336)
-extent(ndvi300m_rstr)  # Ymax have to coincide; Ymin(300m) = Ymin(1km) - 2*(1/336)
+extent(ndvi1km_rstr)   
+extent(ndvi300m_rstr)  # They have to be exactly the same
 ndvi300m_rstr
 dim(ndvi300m_rstr)  / dim(ndvi1km_rstr) #this has to be (3, 3, something)
-
-
 
 
 # Plotting NAs and flagged values map
