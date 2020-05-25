@@ -58,8 +58,10 @@ str(nc)
 #max(lat, 7)
 #
 # Getting a subset containing the eastern-southern cell
-#lon <- ncvar_get(nc, "lon", start = c(120950), count = c(11))
-#lat <- ncvar_get(nc, "lat", start = c(47030), count = c(11))
+#lon <- ncvar_get(nc, "lon", start = c(40310), count = c(11))
+#lat <- ncvar_get(nc, "lat", start = c(15670), count = c(11))
+#ndvi1km <- ncvar_get(nc, "NDVI", start = c(40310, 15670, 1), count = c(11, 11, 1)) ; dim(ndvi1km)
+
 #max(lon, 7)
 #min(lat, 7)
 #
@@ -126,6 +128,7 @@ image.plot(lon, lat, ndvi1km[,])
 #image.plot(lon, lat, ndvi1km)
 dev.off()
 
+
 ## Saving as a raster file (tiff)
 
 ndvi1km_rstr <- raster(t(ndvi1km[, seq(length(lat), 1, -1)]))
@@ -184,6 +187,9 @@ str(nc)
 # Getting a subset containing the eastern-southern cell
 #lon <- ncvar_get(nc, "lon", start = c(120950), count = c(11))
 #lat <- ncvar_get(nc, "lat", start = c(47030), count = c(11))
+#ndvi300m <- ncvar_get(nc, "NDVI", start = c(120950, 47030), count = c(11, 11)) 
+
+
 #max(lon, 7)
 #min(lat, 7)
 #
@@ -310,8 +316,6 @@ nrow(as.data.frame(ndvi300m_rstr))
 
 summary(ndvi1km_rstr)
 summary(ndvi300m_rstr)
-
-
 
 ndvi300m_rsampled1km <- resample(ndvi300m_rstr, ndvi1km_rstr, 
                                  #na.rm = TRUE,

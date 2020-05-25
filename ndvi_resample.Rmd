@@ -78,8 +78,9 @@ map_300mErr <- paste0(path2save, "/v1_withNAs/ndvi300m_kk.jpg")
 
 This is a document to show different options for resampling Land Products (https://land.copernicus.eu/), originally at 333m, to a 1km resolution using R functions and packages. Some comparison of the performance of several methods are also provided.
 
-The analysis is done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product downloaded from the Copernicus Global Land Product portal (https://land.copernicus.eu/global/products/ndvi). The selected images were taken the 11^th^ August 2019 and the working maps are cut between the coordinates (DD) Xmin = 0, Xmax = 4, Ymin = 40, Ymax = 43. See `r fig_num("f0_1km_300", display = "cite")` for the two working maps at 1km and 333m resolution, respectively. 
+The analysis is done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product downloaded from the Copernicus Global Land Product portal (https://land.copernicus.eu/global/products/ndvi). The selected images were taken the 11^th^ August 2019 and the working maps are cut between the coordinates (DD) Xmin = 0, Xmax = 4, Ymin = 40, Ymax = 43. As the original longitude and latitude are defined at the pixel centre[^1], these need to be adjusted to the pixels' upper-left corner to properly define the scale and extent of the maps in R. See `r fig_num("f0_1km_300", display = "cite")` for the two working maps at 1km and 333m resolution, respectively.
 
+[^1]: Erwin Wolters, Wouter Dierckx, Marian-Daniel Iordache, and Else Swinnen. (16/03/2018) PROBA-V Products User Manual v3.01. http://proba-v.vgt.vito.be/sites/proba-v.vgt.vito.be/files/products_user_manual.pdf
 
 ![`r fig0_1km`](`r orig_mapsCat`)
 
@@ -196,7 +197,7 @@ figResampleCorr_2 <- fig_num(name = "f_ResampleCorr_2", caption = "Comparison of
 
 *resample()* function does not deal with NA. This means that when there is a "flagged value" in the 333m resolution map, the result will be NA in the resampled map for that cell. As there are not many "flagged values" inland on the working maps at 333m resolution, both the new map at 1km and the Pearson's *r* are quite similar.
 
-There are 1299 more NA pixels ("flagged values") in the new resampled 1km map than in the original unprocessed 1km-resolution image, over a total of c. 75000 pixels corresponding to land (152100 total cells). In addition, there are 856 NA pixels in the unprocessed 1km image which have values in the resampled 1km image due to the fact that their values in the 333m image are not flagged. These differences make not big improvements in the Pearson's *r*, going from 0.9636 to 0.9638, as seen in  `r fig_num("f_ResampleCorr_1", display = "cite")`, without and after reclassifying the "flagged values" into NAs, respectively.
+There are 1299 more NA pixels ("flagged values") in the new resampled 1km map than in the original unprocessed 1km-resolution image, over a total of c. 75000 pixels corresponding to land (152100 total cells). In addition, there are 856 NA pixels in the unprocessed 1km image which have values in the resampled 1km image due to the fact that their values in the 333m image are not flagged. These differences make not big improvements in the Pearson's *r*, going from **???** to **???**, as seen in  `r fig_num("f_ResampleCorr_2", display = "cite")`, without and after reclassifying the "flagged values" into NAs, respectively.
 
 
 ![](`r paste0(path2save, "/v1_withNAs/resample_correlation.jpg")`)
@@ -216,13 +217,13 @@ figResampleCorr_Aggr_2 <- fig_num(name = "f_ResampleCorr_Aggr_2", caption = "Com
 
 ```
 
-*aggregate()* function has the option to avoid NAs for the calculation of averages, etc. However, as mentioned in the previous subsection, given that there are not many "flagged values" inland on the working 333m maps, Pearson correlation coefficient does not improve very much, although such improvement is a bit bigger than for the *resample()* option. As seen in  `r fig_num("f_ResampleCorr_Aggr_1", display = "cite")` and `r fig_num("f_ResampleCorr_Aggr_2", display = "cite")`, Pearson's *r* are 0.9756 and 0.9871, without reclassifying the "flagged values" into NAs and doing so, respectively.
+*aggregate()* function has the option to avoid NAs for the calculation of averages, etc. However, as mentioned in the previous subsection, given that there are not many "flagged values" inland on the working 333m maps, Pearson correlation coefficient does not improve very much, although such improvement is a bit bigger than for the *resample()* option. As seen in  `r fig_num("f_ResampleCorr_Aggr_1", display = "cite")` and `r fig_num("f_ResampleCorr_Aggr_2", display = "cite")`, Pearson's *r* are **???** and **???**, without reclassifying the "flagged values" into NAs and doing so, respectively.
 
 
-![`r figResampleCorr_1`](`r paste0(path2save, "/v1_withNAs/resample_correlation_Aggr.jpg")`)
+![](`r paste0(path2save, "/v1_withNAs/resample_correlation_Aggr.jpg")`)
 
 
-![`r figResampleCorr_2`](`r paste0(path2save, "/resample_correlation_Aggr.jpg")`)
+![`r figResampleCorr_Aggr_2`](`r paste0(path2save, "/resample_correlation_Aggr.jpg")`)
 
 
 
