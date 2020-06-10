@@ -79,8 +79,8 @@ as.vector(my_extent)
 
 
 ## Reading in data 1km global ####
-
 ndvi_1km_orig <- raster(ndvi_1km_orig)
+img_date <- ndvi_1km_orig@z[[1]]
 ndvi_1km_orig_extnt <- extent(ndvi_1km_orig)
 
 if(all(round(ndvi_1km_orig_extnt[1], 7) %in% round(x_ext, 7) &
@@ -390,7 +390,7 @@ comp_results[3, 4] <- mae
 
 
 # Saving stuff for the report
-stuff2save <- c("comp_results")
+stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults4Report.RData"))
 
 

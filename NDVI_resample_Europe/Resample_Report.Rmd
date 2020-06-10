@@ -1,0 +1,122 @@
+---
+title: "NDVI Resampling using R-based tools"
+subtitle: ""
+author:
+  - Xavier Rotllan-Puig:
+      email: xavier.rotllan.puig@aster-projects.cat
+      institute: [jrc, aster]
+      correspondence: true
+  - Federico Gianoli:
+      institute: [jrc]
+  - Pier Lorenzo Marasco:
+      institute: [jrc]
+  - Michael Cherlet:
+      institute: [jrc]
+ 
+institute:
+  - jrc: Joint Research Centre – European Commission. Directorate D – Sustainable Resources. Unit D6 – Knowledge for Sustainable Development & Food Security Unit. Via Enrico Fermi 2749. I-21027 Ispra (VA), ITALY
+  - aster: ASTER-Projects. Barri Reboll, 9, 1r. 08694 Guardiola de Berguedà (Barcelona), SPAIN
+
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+
+output: 
+  word_document:
+    reference_docx: /Users/xavi_rp/Documents/D6_LPD/LPD/ATBD/LPD_MS_styles.docx
+    #toc: true #table of content true
+    toc_depth: 3  #up to three depths of headings (specified by #, ## and ###)
+    #number_sections: true  #number sections at each table header
+    #theme: united  #options for theme
+    #highlight: tango  #syntax highlighting style
+    #css: style.css   #custom css, should be in same folder. Only for HTML
+    pandoc_args:
+      - --lua-filter=scholar-metadata.lua
+      - --lua-filter=author-info-blocks.lua
+      
+#bibliography: lpd_biblio.bib
+#csl: methods-in-ecology-and-evolution.csl
+always_allow_html: yes
+---
+
+```{r setup, include = FALSE, results='asis'}
+library(knitr)
+library(pander)
+library(captioner)
+library(raster)
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r include = FALSE}
+if(Sys.info()[4] == "D01RI1700371"){
+  path2data <- "E:/rotllxa/NDVI_resample/NDVI_data"
+  path2save <- "E:/rotllxa/NDVI_resample/NDVI_resample_Europe"
+}else if(Sys.info()[4] == "h05-wad.ies.jrc.it"){
+  path2data <- ""
+  path2save <- ""
+}else if(Sys.info()[4] == "MacBook-MacBook-Pro-de-Xavier.local"){
+  path2data <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_data"
+  path2save <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/NDVI_resample_Europe"
+}else{
+  stop("Define your machine before to run LPD")
+}
+
+load(file = paste0(path2save, "/ResampleResults4Report.RData"), verbose = FALSE)
+
+
+table_num <- captioner::captioner(prefix = "Table")
+fig_num <- captioner::captioner(prefix = "Figure")
+#ts <- 0
+```
+
+
+**Abstract**
+
+
+
+# Introduction
+
+The Copernicus Global Land Service (CGLS; https://land.copernicus.eu/global/) is a component of the Land Monitoring Core Service (LMCS) of Copernicus, the European flagship programme on Earth Observation. CGLS systematically produces and distributes time series of global bio-geophysical products on the status and evolution of the land surface, at different spatial resolutions. These products are used to monitor the vegetation, the water cycle, the energy budget and the terrestrial cryosphere. 
+
+The CGLS vegetation-related products (i.e. NDVI, FAPAR...), based on PROBA-V observations, have been distributed at 1km and 333m until June, 2020. As of this date, the new products are no longer provided at 1km resolution. However, the users who might be interested on continuing their 1km time series can use a resample of the 333 m products.
+
+The Joint Research Centre (EC) provides different tools to help the users make their own resamplings. For example, a Notebook with R code and some explanations can be found at https://nbviewer.jupyter.org/github/VITObelgium/notebook-samples/blob/master/datasets/probav/ResampleTool_R_notebook.ipynb. In addition, Python code to run in QGIS can be found in ...**Fede??**.
+
+In this document we present some comparisons of the results obtained with these two resampling tools with the original CGLS products at 1km resolution, as well as among them. 
+
+
+
+
+# Data sets
+
+```{r include = FALSE}
+work_extent <- round(as.vector(my_extent), 2)
+work_extent <- paste(c("xmin = ", "xmax = ", "ymin = ", "ymax = "), work_extent)
+
+Sys.setlocale("LC_TIME", "C")
+img_date <- format(as.Date(img_date), "%B %d, %Y")
+
+fig1_300m <- fig_num(name = "f1_300", caption = "NDVI working map at 333m resolution")
+orig_300map <- paste0(path2save, "/ndvi_300m_orig_Eur.jpg")
+
+```
+
+The analysis has been done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product. The selected image was taken the `r img_date`, and the working maps were cut between the coordinates (DD) `r work_extent`. `r fig_num("f1_300", display = "cite")` shows the 333m NDVI working map. 
+
+The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, digital values in the netCDF (DN) > 250 are flagged and need to be converted into NA. When the netCDF files are read in as a *raster* object, the digital values are scaled into real NDVI values automatically. After that, all pixels with NDVI values > 0.92 (= DN 250 x scale + offset) were set to NA.
+
+The information regarding flagged values, as well as other, can be seen in the netCDF file metadata. In addition, more details on the CGLS global products can be found in the their description and Product User Manual documentation at https://land.copernicus.eu/global/products/. 
+
+The R code used to perform all the analysis reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample.
+
+
+![`r fig1_300m`](`r orig_300map`)
+
+
+
+
+
+
+
+
+
+
