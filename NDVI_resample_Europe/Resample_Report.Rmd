@@ -79,14 +79,15 @@ The Copernicus Global Land Service (CGLS; https://land.copernicus.eu/global/) is
 
 The CGLS vegetation-related products (i.e. NDVI, FAPAR...), based on PROBA-V observations, have been distributed at 1km and 333m until June, 2020. As of this date, the new products are no longer provided at 1km resolution. However, the users who might be interested on continuing their 1km time series can use a resample of the 333 m products.
 
-The Joint Research Centre (EC) provides different tools to help the users make their own resamplings. For example, a Notebook with R code and some explanations can be found at https://nbviewer.jupyter.org/github/VITObelgium/notebook-samples/blob/master/datasets/probav/ResampleTool_R_notebook.ipynb. In addition, Python code to run in QGIS can be found in ...**Fede??**.
+The Joint Research Centre (European Commission) provides different tools to help the users make their own resampling exercices. For example, a Notebook with R code and some explanations can be found at https://nbviewer.jupyter.org/github/VITObelgium/notebook-samples/blob/master/datasets/probav/ResampleTool_R_notebook.ipynb. In addition, Python code to run in QGIS can be found in ...**Fede??**.
 
 In this document we present some comparisons of the results obtained with these two resampling tools with the original CGLS products at 1km resolution, as well as among them. 
 
 
 
+# Materials and methods
 
-# Data sets
+## Data sets
 
 ```{r include = FALSE}
 work_extent <- round(as.vector(my_extent), 2)
@@ -98,22 +99,92 @@ img_date <- format(as.Date(img_date), "%B %d, %Y")
 fig1_300m <- fig_num(name = "f1_300", caption = "NDVI working map at 333m resolution")
 orig_300map <- paste0(path2save, "/ndvi_300m_orig_Eur.jpg")
 
+fig2_1km <- fig_num(name = "f2_1km", caption = "NDVI working map at 1km resolution used to evaluate the rersampled map")
+orig_1map <- paste0(path2save, "/ndvi_1km_orig_Eur.jpg")
+
 ```
 
-The analysis has been done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product. The selected image was taken the `r img_date`, and the working maps were cut between the coordinates (DD) `r work_extent`. `r fig_num("f1_300", display = "cite")` shows the 333m NDVI working map. 
+The analysis has been done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product. The selected images (i.e. 1km and 33m resolution) were taken the `r img_date`, and the working maps were cut between the coordinates (DD) `r work_extent`. `r fig_num("f1_300", display = "cite")` and `r fig_num("f2_1km", display = "cite")` show respectively the 333m NDVI working map used for the resampling and the 1km NDVI working map used to compare the results of both resampling methods.
 
-The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, digital values in the netCDF (DN) > 250 are flagged and need to be converted into NA. When the netCDF files are read in as a *raster* object, the digital values are scaled into real NDVI values automatically. After that, all pixels with NDVI values > 0.92 (= DN 250 x scale + offset) were set to NA.
 
-The information regarding flagged values, as well as other, can be seen in the netCDF file metadata. In addition, more details on the CGLS global products can be found in the their description and Product User Manual documentation at https://land.copernicus.eu/global/products/. 
-
-The R code used to perform all the analysis reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample.
+![`r fig1_300m`](`r orig_300map`)
 
 
 ![`r fig1_300m`](`r orig_300map`)
 
 
 
+The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, digital values in the netCDF (DN) > 250 are flagged and need to be converted into NA. When the netCDF files are read in as a *raster* object, the digital values are scaled into real NDVI values automatically. After that, all pixels with NDVI values > 0.92 (= DN 250 x scale + offset) were set to NA.
 
+The information regarding flagged values, as well as other supporting information, can be seen in the netCDF file metadata. In addition, more details on the CGLS global products can be found in their Product User Manual documentation at https://land.copernicus.eu/global/products/. 
+
+
+
+## Resample method
+
+There are several approaches to resample data from a finer to a coarser resolution. They could be grouped into area-based aggregation methods and point-based interpolation methods (e.g. Bilinear and Nearest Neighbour), and can be applied depending on the data type, etc.
+
+The aggregation method, the one used in this assessment, groups rectangular matrix of pixels of the finer resolution image to create a new map with larger cells. In this case, as we want to resample from 333m to 1km, a factor of 3 has been implemented (i.e. a matrix of 3x3 pixels).
+
+On the one hand, for the R-based method, the function *aggregate()* of the package *raster* has been used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For NDVI products the most suitable method is the average, but we included the condition that at least 5 out of the 9 pixels had to be non-missing (i.e. not NA).
+
+On the other hand, for the QGIS method.... **Fede**
+
+
+## Metrics and plots
+
+In order to assess the performance of the resampling methods, besides maps of the results, three well known and widely used metrics and a scatterplot are provided. The metrics are:
+
+* Pearson correlation coefficient (Pearson's *r*)
+
+* Root-mean-square error (RMSE)
+
+* Mean absolute error (MAE) 
+
+
+The R code used to perform the assessment reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample.
+
+
+
+# Results and discussion
+
+```{r include = FALSE}
+comp_results[, 2:4] <- round(comp_results[, 2:4], 3)
+comp_results_df <- table_num(name = "comp_results_table", caption = "")
+
+fig_1km_1km_Raggr <- fig_num(name = "f_1km_1km_Raggr", caption = "Original NDVI map at 1km resolution and the resampled one using the R-based method")
+orig_Raggr <- paste0(path2save, "/ndvi1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_scat <- fig_num(name = "f_1km_1km_Raggr_scat", caption = "")
+orig_Raggr_scat <- paste0(path2save, "/resample_correlation_RAggr.jpg")
+
+
+
+```
+
+`r table_num("comp_results_table", display = "cite")` shows the three metrics to evaluate the comparisons of the two resampling methods among them and with the original CGLS NDVI product at 1 km resolution.
+
+## R-based method vs Python-based method
+
+
+
+
+## R-based method vs original 1km product
+
+`r fig_num("f_1km_1km_Raggr", display = "cite")` shows both the original NDVI map at 1km resolution and the resampled one to 1km using the R-based method. 
+
+![`r fig_1km_1km_Raggr_scat`](`r orig_Raggr_scat`)
+
+As it can be seen in the scatterplot (`r fig_num("f3_1km_1km_Raggr_scat", display = "cite")`)
+
+
+
+
+`r table_num("tabSteadIndex", display = "full")`
+```{r echo = FALSE}
+pander(comp_results)
+```
+&nbsp;
 
 
 
