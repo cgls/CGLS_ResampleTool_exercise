@@ -99,16 +99,12 @@ img_date <- format(as.Date(img_date), "%B %d, %Y")
 fig1_300m <- fig_num(name = "f1_300", caption = "NDVI working map at 333m resolution")
 orig_300map <- paste0(path2save, "/ndvi_300m_orig_Eur.jpg")
 
-fig2_1km <- fig_num(name = "f2_1km", caption = "NDVI working map at 1km resolution used to evaluate the rersampled map")
-orig_1map <- paste0(path2save, "/ndvi_1km_orig_Eur.jpg")
+#fig2_1km <- fig_num(name = "f2_1km", caption = "NDVI working map at 1km resolution used to evaluate the rersampled map")
+#orig_1map <- paste0(path2save, "/ndvi_1km_orig_Eur.jpg")
 
 ```
 
-The analysis has been done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product. The selected images (i.e. 1km and 33m resolution) were taken the `r img_date`, and the working maps were cut between the coordinates (DD) `r work_extent`. `r fig_num("f1_300", display = "cite")` and `r fig_num("f2_1km", display = "cite")` show respectively the 333m NDVI working map used for the resampling and the 1km NDVI working map used to compare the results of both resampling methods.
-
-
-![`r fig1_300m`](`r orig_300map`)
-
+The analysis has been done using a subset of the 10-daily Normalized Difference Vegetation Index (NDVI) global product. The selected images (i.e. 1km and 33m resolution) were taken the `r img_date`, and the working maps were cut between the coordinates (DD) `r work_extent`. `r fig_num("f1_300", display = "cite")` shows the 333m NDVI working map used for the resampling.
 
 ![`r fig1_300m`](`r orig_300map`)
 
@@ -124,16 +120,16 @@ The information regarding flagged values, as well as other supporting informatio
 
 There are several approaches to resample data from a finer to a coarser resolution. They could be grouped into area-based aggregation methods and point-based interpolation methods (e.g. Bilinear and Nearest Neighbour), and can be applied depending on the data type, etc.
 
-The aggregation method, the one used in this assessment, groups rectangular matrix of pixels of the finer resolution image to create a new map with larger cells. In this case, as we want to resample from 333m to 1km, a factor of 3 has been implemented (i.e. a matrix of 3x3 pixels).
+The aggregation method used in this assessment groups rectangular matrix of pixels of the finer resolution image to create a new map with larger cells. In this case, as we wanted to resample from 333m to 1km, a factor of 3 was implemented (i.e. a matrix of 3x3 pixels).
 
-On the one hand, for the R-based method, the function *aggregate()* of the package *raster* has been used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For NDVI products the most suitable method is the average, but we included the condition that at least 5 out of the 9 pixels had to be non-missing (i.e. not NA).
+On the one hand, for the R-based (R Core Team, 2019) method, the function *aggregate()* of the package *raster* (Hijmans, 2019) was used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For NDVI products the most suitable method is the average, but we also included the condition that at least 5 out of the 9 pixels had to have valid values (i.e. not NA).
 
-On the other hand, for the QGIS method.... **Fede**
+On the other hand, for the Python-based (Van Rossum, G. & Drake, F.L., 2009) method implemented for QGIS (QGIS Development Team, 2009).... **Fede**
 
 
 ## Metrics and plots
 
-In order to assess the performance of the resampling methods, besides maps of the results, three well known and widely used metrics and a scatterplot are provided. The metrics are:
+In order to assess the performance of the resampling methods, besides maps of the results, three well known and widely used metrics and a scatterplot were produced. The metrics are:
 
 * Pearson correlation coefficient (Pearson's *r*)
 
@@ -142,11 +138,11 @@ In order to assess the performance of the resampling methods, besides maps of th
 * Mean absolute error (MAE) 
 
 
-The R code used to perform the assessment reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample.
+The R code used to perform the assessment reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample. 
 
 
 
-# Results and discussion
+# Results
 
 ```{r include = FALSE}
 comp_results[, 2:4] <- round(comp_results[, 2:4], 3)
@@ -155,14 +151,21 @@ comp_results_df <- table_num(name = "comp_results_table", caption = "")
 fig_1km_1km_Raggr <- fig_num(name = "f_1km_1km_Raggr", caption = "Original NDVI map at 1km resolution and the resampled one using the R-based method")
 orig_Raggr <- paste0(path2save, "/ndvi1km_1kmResampled_RAggr.jpg")
 
-fig_1km_1km_Raggr_scat <- fig_num(name = "f_1km_1km_Raggr_scat", caption = "")
+fig_1km_1km_Raggr_scat <- fig_num(name = "f_1km_1km_Raggr_scat", caption = "Scatter plot displaying a random subset (1%) of pixel values of the 1km original NDVI product against the values of the same pixels of the resampled map using the R method (blue points). Also the regression (red) line")
 orig_Raggr_scat <- paste0(path2save, "/resample_correlation_RAggr.jpg")
 
 
 
 ```
 
-`r table_num("comp_results_table", display = "cite")` shows the three metrics to evaluate the comparisons of the two resampling methods among them and with the original CGLS NDVI product at 1 km resolution.
+`r table_num("comp_results_table", display = "cite")` shows the three metrics calculated to evaluate the comparisons of the two resampling methods among them and with the original CGLS NDVI product at 1 km resolution.
+
+`r table_num("comp_results_table", display = "full")`
+```{r echo = FALSE}
+pander(comp_results)
+```
+&nbsp;
+
 
 ## R-based method vs Python-based method
 
@@ -173,21 +176,40 @@ orig_Raggr_scat <- paste0(path2save, "/resample_correlation_RAggr.jpg")
 
 `r fig_num("f_1km_1km_Raggr", display = "cite")` shows both the original NDVI map at 1km resolution and the resampled one to 1km using the R-based method. 
 
+![`r fig_1km_1km_Raggr`](`r orig_Raggr`)
+
+As it can be seen in the scatterplot (`r fig_num("f_1km_1km_Raggr_scat", display = "cite")`), and corroborated by the Pearson's *r* (`r comp_results[1, 2]`), there was a good level of correlation among the original 1km map and the resampled one using the R method. Also RMSE and MAE reported good levels of 'error' among the two maps (`r paste0(comp_results[1, 3], " and ", comp_results[1, 4], ", respectively")`). 
+
+
 ![`r fig_1km_1km_Raggr_scat`](`r orig_Raggr_scat`)
 
-As it can be seen in the scatterplot (`r fig_num("f3_1km_1km_Raggr_scat", display = "cite")`)
 
 
 
 
-`r table_num("tabSteadIndex", display = "full")`
-```{r echo = FALSE}
-pander(comp_results)
-```
-&nbsp;
+
+
+## Python-based method vs original 1km product
 
 
 
+# Conclusions
 
+In this document we show...
+
+differences in the temporal composition of the 300m and 1km products
+
+Both methods assessed (i.e. R-based and Python-based) perform equally well. Therefore, both can be used indistinctly, depending only on the user's preferences. 
+
+
+# References
+
+Hijmans, R.J. 2019. raster: Geographic Data Analysis and Modeling. R package version 3.0-2. https://CRAN.R-project.org/package=raster
+
+QGIS Development Team. 2009. QGIS Geographic Information System. Open Source Geospatial Foundation. URL http://qgis.org
+
+R Core Team. 2019. R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+Van Rossum, G. & Drake, F.L. 2009. Python 3 Reference Manual, Scotts Valley, CA: CreateSpace.
 
 
