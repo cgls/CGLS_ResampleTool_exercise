@@ -288,6 +288,11 @@ comp_results[1, 3] <- rmse
 mae <- mean(rsmpl_df$diff)
 comp_results[1, 4] <- mae
 
+# Saving stuff for the report
+stuff2save <- c("comp_results", "my_extent", "img_date")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
+
+
 
 # Bivariate Linear Regression
 lm_obj <- lm(rsmpl_df$getValues.lai1km_rstr. ~ rsmpl_df$getValues.r300m_resampled1km_Aggr.)

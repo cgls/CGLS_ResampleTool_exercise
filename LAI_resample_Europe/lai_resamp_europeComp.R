@@ -38,26 +38,26 @@ if(Sys.info()[4] == "D01RI1700371"){
 setwd(path2save)
 
 nc_file300m <- paste0(path2data, "/lai300_v1_333m/lai300_v1_333m_c_gls_LAI300_201905100000_GLOBE_PROBAV_V1.0.1.nc")
-qgis_resamp_europe_avrge <- paste0(path2data, "/europa1000_aver.tif")
+#qgis_resamp_europe_avrge <- paste0(path2data, "/europa1000_aver.tif")
 lai_1km_orig <- paste0(path2data, "/lai_v2_1km/c_gls_LAI-RT6_201905100000_GLOBE_PROBAV_V2.0.1.nc")
 
 
 
 ## Reading in data QGIS resampled average ####
 
-qgis_resamp_europe_avrge <- raster(qgis_resamp_europe_avrge)
-#kk <- raster(paste0("/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/NDVI_resample_Europe", "/r300m_resampled1km_Aggr.tif"))
+#qgis_resamp_europe_avrge <- raster(qgis_resamp_europe_avrge)
+kk <- raster(paste0("/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/NDVI_resample_Europe", "/r300m_resampled1km_Aggr.tif"))
 
-qgis_resamp_europe_avrge <- projectRaster(from = qgis_resamp_europe_avrge, 
-                                          res = (1/112),
-                                          crs = CRS('+init=EPSG:4326'), 
-                                          method="bilinear", 
-                                          alignOnly=FALSE, over=FALSE, 
-                                          filename="") 
-qgis_resamp_europe_avrge
-
-my_extent <- extent(qgis_resamp_europe_avrge)
-#my_extent <- extent(kk)
+#qgis_resamp_europe_avrge <- projectRaster(from = qgis_resamp_europe_avrge, 
+#                                          res = (1/112),
+#                                          crs = CRS('+init=EPSG:4326'), 
+#                                          method="bilinear", 
+#                                          alignOnly=FALSE, over=FALSE, 
+#                                          filename="") 
+#qgis_resamp_europe_avrge
+#
+#my_extent <- extent(qgis_resamp_europe_avrge)
+my_extent <- extent(kk)
 
 # Checking correspondence with 1km PROBA-V products
 # The following vectors contain Long and Lat coordinates, respectively, of the 1km grid (cell boundaries):
@@ -307,6 +307,9 @@ lm_obj_summary <- summary(lm_obj)
 round(lm_obj_summary$r.squared, 10) == round(rsmpl_df_pearson^2, 10)
 
 
+# Saving stuff for the report
+stuff2save <- c("comp_results", "my_extent", "img_date")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_europe_4Report.RData"))
 
 
 
