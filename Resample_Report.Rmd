@@ -116,11 +116,6 @@ orig_ndvi_300map <- paste0(path2save_NDVI_Eur, "/ndvi_300m_orig_Eur.jpg")
 
 fig_lai_300m_ama <- fig_num(name = "f_lai_300_ama", caption = "LAI map at 333m resolution for the Amazonian working extent")
 orig_lai_300map <- paste0(path2save_LAI_Ama, "/lai_300m_orig_Amaz.jpg")
-
-
-#fig2_1km <- fig_num(name = "f2_1km", caption = "NDVI working map at 1km resolution used to evaluate the rersampled map")
-#orig_1map <- paste0(path2save_NDVI_Eur, "/ndvi_1km_orig_Eur.jpg")
-
 ```
 
 The analysis was done using different subsets of several 10-daily CGLS vegetation-related global products (i.e. Normalized Difference Vegetation Index-NDVI and Leaf area index-LAI). The selected images (i.e. 1km and 333m resolution) were taken the `r img_date`, and the assessments were made in two different areas. On the one hand, NDVI resampled product was tested for Europe and North Africa (coordinates in Decimal Degrees `r work_extent_eur`) in order to have a wide representation of different landscapes. On the other hand, the LAI product was tested both using the same European-North African window and also on a subset from a tropical area (Amazonia; coordinates `r work_extent_ama`) in order to have as well a good representation of evergreen broadleaf forests. While `r fig_num("f_ndvi_300_eur", display = "cite")` shows the 333m NDVI working map used for the resampling in Europe-North Africa, `r fig_num("f_lai_300_ama", display = "cite")` shows the 333m LAI working map used for the Amazonian area.
@@ -152,15 +147,14 @@ There are several approaches to resample data from a finer to a coarser resoluti
 
 The aggregation method used in this assessment groups rectangular matrix of pixels of the finer resolution image to create a new map with larger cells. In this case, as we wanted to resample from 333m to 1km, a factor of 3 was implemented (i.e. a matrix of 3x3 pixels).
 
-On the one hand, for the R-based (R Core Team, 2019) method, the function *aggregate()* of the package *raster* (Hijmans, 2019) was used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For both the NDVI and the LAI products the most suitable method is the average. `r table_num("method_df", display = "cite")` shows a recommendation of the best suited method for each product/layer. As recommended in the tool, it was also included the condition that at least 5 out of the 9 pixels must have valid values (i.e. not NA).
+On the one hand, for the R-based (R Core Team, 2019) method, the function *aggregate()* of the package *raster* (Hijmans, 2019) was used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For both the NDVI and the LAI products the most suitable method is the average. `r table_num("method_table", display = "cite")` shows a recommendation of the best suited method for each product/layer. In addition, as it is also recommended in the tool, it was included the condition that at least 5 out of the 9 pixels must have valid values (i.e. not NA) to return a valid value for the resampled pixel.
 
 
 `r pander(cutoff_method_df[, c(1:2, 8)], caption = method_df)`
-
+&nbsp;
 
 On the other hand, for the Python-based (Van Rossum, G. & Drake, F.L., 2009) method implemented for QGIS (QGIS Development Team, 2009).... **Fede**
-
-
+&nbsp;
 
 
 ## Metrics and plots
@@ -175,57 +169,86 @@ In order to assess the performance of the resampling methods, besides mapping th
 
 
 The R code used to perform the assessment reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample. 
+&nbsp;
 
 
 
 # Results
 
 ```{r include = FALSE}
+comp_results <- comp_results_NDVI_Eur
+comp_results <- rbind(comp_results, comp_results_LAI_Eur, comp_results_LAI_Ama)
 comp_results[, 2:4] <- round(comp_results[, 2:4], 3)
-comp_results_df <- table_num(name = "comp_results_table", caption = "")
+comp_results[1:5, 1] <- c("NDVI_Europe/NorthAfrica_R", "NDVI_Europe/NorthAfrica_QGIS/Python", "NDVI_Eur/NorthAf_R_vs_QGIS/Python", "LAI_Europe/NorthAfrica_R", "LAI_Amazonia_R")
+names(comp_results) <-c("Assessment", "Pearson's *r*", "RMSE", "MAE")
 
-fig_1km_1km_Raggr <- fig_num(name = "f_1km_1km_Raggr", caption = "Original NDVI map at 1km resolution and the resampled one using the R-based method")
-orig_Raggr <- paste0(path2save_NDVI_Eur, "/ndvi1km_1kmResampled_RAggr.jpg")
-
-fig_1km_1km_Raggr_scat <- fig_num(name = "f_1km_1km_Raggr_scat", caption = "Scatter plot displaying a random subset (1%) of pixel values of the 1km original NDVI product against the values of the same pixels of the resampled map using the R method (blue points). Also the regression (red) line")
-orig_Raggr_scat <- paste0(path2save_NDVI_Eur, "/resample_correlation_RAggr.jpg")
+comp_results_df <- table_num(name = "comp_results_table", caption = "Pearson's *r*, Root Mean Square Error (RMSE) and Mean Absolute Error (MAE) of each case study")
 
 
 
 ```
 
-`r table_num("comp_results_table", display = "cite")` shows the three metrics calculated to evaluate the comparisons of the two resampling methods among them and with the original CGLS NDVI product at 1 km resolution.
+In this document we present five different assessments depending on the CGLS product analised, the area of study and the resampling tool in use. While three of them compare the resampling results obtained with the R-based tool (1 NDVI and 2 LAI) against the original 1km product, one analyses the QGIS/Python results (NDVI) against the same 1km product and another one compares the results of both tools (R vs QGIS/Python).
 
-`r table_num("comp_results_table", display = "full")`
-```{r echo = FALSE}
-pander(comp_results)
-```
+`r table_num("comp_results_table", display = "cite")` summarizes the three metrics calculated in each assessment, so that an overview of all the cases is provided. In the following subsections each case will be developed in more detail separatedly. 
+
+`r pander(comp_results, caption = comp_results_df)`
 &nbsp;
 
 
-## R-based method vs Python-based method
+
+## R-based tool vs the original 1km product: NDVI - Europe/North Africa
+
+```{r echo = FALSE}
+fig_1km_1km_Raggr_NDVI_eur <- fig_num(name = "f_1km_1km_Raggr_NDVI_eur", caption = "Original NDVI map at 1km resolution and the resampled one using the R-based tool for Europe/North Africa")
+orig_Raggr_NDVI_eur <- paste0(path2save_NDVI_Eur, "/ndvi1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_NDVI_eur_scat <- fig_num(name = "f_1km_1km_Raggr_NDVI_eur_scat", caption = "Scatter plot displaying a random subset (1%) of pixel values of the 1km original NDVI product against the values of the same pixels of the resampled map using the R tool (blue points) for Europe/North Africa. Also the regression (red) line")
+orig_Raggr_NDVI_eur_scat <- paste0(path2save_NDVI_Eur, "/resample_correlation_RAggr.jpg")
+
+```
+
+
+To have a first impression of the results of the resample tool, `r fig_num("f_1km_1km_Raggr_NDVI_eur", display = "cite")` shows both the original NDVI map at 1km resolution for the region of study (Europe and North Africa) and the resampled one to 1km using the R-based tool. 
+
+![`r fig_1km_1km_Raggr_NDVI_eur`](`r orig_Raggr_NDVI_eur`)
+
+As it can be seen in the scatterplot (`r fig_num("f_1km_1km_Raggr_NDVI_eur_scat", display = "cite")`), and corroborated by the Pearson's *r* (`r comp_results[1, 2]`), there was a good level of correlation among the original 1km map and the resampled one using the R tool. In addition, considering that NDVI values ranged from -0.08	to 0.92, also RMSE and MAE reported good levels of 'error' among the two maps (`r paste0(comp_results[1, 3], " and ", comp_results[1, 4], ", respectively")`). 
+
+
+![`r fig_1km_1km_Raggr_NDVI_eur_scat`](`r orig_Raggr_NDVI_eur_scat`)
 
 
 
 
-## R-based method vs original 1km product
-
-`r fig_num("f_1km_1km_Raggr", display = "cite")` shows both the original NDVI map at 1km resolution and the resampled one to 1km using the R-based method. 
-
-![`r fig_1km_1km_Raggr`](`r orig_Raggr`)
-
-As it can be seen in the scatterplot (`r fig_num("f_1km_1km_Raggr_scat", display = "cite")`), and corroborated by the Pearson's *r* (`r comp_results[1, 2]`), there was a good level of correlation among the original 1km map and the resampled one using the R method. Also RMSE and MAE reported good levels of 'error' among the two maps (`r paste0(comp_results[1, 3], " and ", comp_results[1, 4], ", respectively")`). 
-
-
-![`r fig_1km_1km_Raggr_scat`](`r orig_Raggr_scat`)
 
 
 
+## QGIS/Python tool vs the original 1km product: NDVI-Europe/North Africa
+
+
+## R-based tool vs QGIS/Python-based tool: NDVI-Europe/North Africa
+
+## R-based tool vs the original 1km product: LAI - Europe/North Africa
+
+## R-based tool vs the original 1km product: LAI - Amazonia
 
 
 
 
-## Python-based method vs original 1km product
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
