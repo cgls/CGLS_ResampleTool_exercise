@@ -31,6 +31,7 @@ output:
     #theme: united  #options for theme
     #highlight: tango  #syntax highlighting style
     #css: style.css   #custom css, should be in same folder. Only for HTML
+    fig_caption: yes
     pandoc_args:
       - --lua-filter=scholar-metadata.lua
       - --lua-filter=author-info-blocks.lua
@@ -213,23 +214,57 @@ To have a first impression of the results of the resample tool, `r fig_num("f_1k
 
 ![`r fig_1km_1km_Raggr_NDVI_eur`](`r orig_Raggr_NDVI_eur`)
 
-As it can be seen in the scatterplot (`r fig_num("f_1km_1km_Raggr_NDVI_eur_scat", display = "cite")`), and corroborated by the Pearson's *r* (`r comp_results[1, 2]`), there was a good level of correlation among the original 1km map and the resampled one using the R tool. In addition, considering that NDVI values ranged from -0.08	to 0.92, also RMSE and MAE reported good levels of 'error' among the two maps (`r paste0(comp_results[1, 3], " and ", comp_results[1, 4], ", respectively")`). 
+As it can be seen in the scatterplot (`r fig_num("f_1km_1km_Raggr_NDVI_eur_scat", display = "cite")`), and corroborated by the Pearson correlation coefficient (Pearson's *r* = `r comp_results[1, 2]`; `r table_num("comp_results_table", display = "cite")`), there was a good level of correlation among the original 1km map and the resampled one using the R tool. In addition, considering that NDVI values ranged from -0.08	to 0.92, also RMSE and MAE reported good levels of 'error' among the two maps (`r paste0(comp_results[1, 3], " and ", comp_results[1, 4], ", respectively")`). 
 
 
 ![`r fig_1km_1km_Raggr_NDVI_eur_scat`](`r orig_Raggr_NDVI_eur_scat`)
 
 
 
-
-
-
-
 ## QGIS/Python tool vs the original 1km product: NDVI-Europe/North Africa
+
+```{r echo = FALSE}
+fig_1km_1km_QGISaggr_NDVI_eur <- fig_num(name = "f_1km_1km_QGISaggr_NDVI_eur", caption = "Original NDVI map at 1km resolution and the resampled one using the QGIS/Python-based tool for Europe/North Africa")
+orig_QGISaggr_NDVI_eur <- paste0(path2save_NDVI_Eur, "/ndvi1km_1kmResampled_QGISAggr.jpg")
+
+fig_1km_1km_QGISaggr_NDVI_eur_scat <- fig_num(name = "f_1km_1km_QGISaggr_NDVI_eur_scat", caption = "Scatter plot displaying a random subset (1%) of pixel values of the 1km original NDVI product against the values of the same pixels of the resampled map using the QGIS/Python tool (blue points) for Europe/North Africa. Also the regression (red) line")
+orig_QGISaggr_NDVI_eur_scat <- paste0(path2save_NDVI_Eur, "/resample_correlation_QGISAggr.jpg")
+
+```
+
+
+`r fig_num("f_1km_1km_QGISaggr_NDVI_eur", display = "cite")` shows respectively the original NDVI map at 1km resolution and the resampled one to 1km using the QGIS/Python-based tool for Europe/North Africa. 
+
+![`r fig_1km_1km_QGISaggr_NDVI_eur`](`r orig_QGISaggr_NDVI_eur`)
+
+Similarly to the performance of the R tool, the following scatterplot (`r fig_num("f_1km_1km_QGISaggr_NDVI_eur_scat", display = "cite")`) together with the correlation coefficient (Pearson's *r* = `r comp_results[2, 2]`; `r table_num("comp_results_table", display = "cite")`), also show a good level of correlation among the original 1km map and the resampled one using the QGIS/Pyhton tool. In addition, also the reported RMSE and MAE gave similar, therefore good, levels of 'error' among the two maps (`r paste0(comp_results[2, 3], " and ", comp_results[2, 4], ", respectively")`). 
+
+![`r fig_1km_1km_QGISaggr_NDVI_eur_scat`](`r orig_QGISaggr_NDVI_eur_scat`)
+
 
 
 ## R-based tool vs QGIS/Python-based tool: NDVI-Europe/North Africa
 
+```{r echo = FALSE}
+fig_1km_1km_R_QGISaggr_NDVI_eur_scat <- fig_num(name = "f_1km_1km_R_QGISaggr_NDVI_eur_scat", caption = "Scatter plot displaying a random subset (1%) of pixel values of the 1km NDVI product resampled using the R-based tool against the ones resampled using the QGIS/Python tool (blue points) for Europe/North Africa. Also the regression (red) line")
+orig_R_QGISaggr_NDVI_eur_scat <- paste0(path2save_NDVI_Eur, "/resample_correlation_R_QGIS_Aggr.jpg")
+
+```
+
+The following scatterplot (`r fig_num("f_1km_1km_QGISaggr_NDVI_eur_scat", display = "cite")`) represents the correlation between the resampled map values using the two tools presented in this assessment. It shows a very high correlation between them, reporting a correlation coefficient (Pearson's *r*) of `r comp_results[3, 2]` (`r table_num("comp_results_table", display = "cite")`). Additionally, RMSE and MAE were `r comp_results[3, 3]` and `r comp_results[3, 4]`, respectively.
+
+
+![`r fig_1km_1km_R_QGISaggr_NDVI_eur_scat`](`r orig_R_QGISaggr_NDVI_eur_scat`)
+
+
+In light of the two assessments made on both the R-based and the QGIS/Python-based tools, as well as the results showed in this subsection, it can be confirmed that both tools can be equally used, only based on user's preferences.
+
+
+
 ## R-based tool vs the original 1km product: LAI - Europe/North Africa
+
+
+
 
 ## R-based tool vs the original 1km product: LAI - Amazonia
 

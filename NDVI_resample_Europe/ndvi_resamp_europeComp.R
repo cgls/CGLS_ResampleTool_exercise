@@ -341,6 +341,15 @@ mae <- mean(rsmpl_df$diff)
 comp_results[2, 4] <- mae
 
 
+# plotting original-1km + resampled-1km
+jpeg(paste0(path2save, "/ndvi1km_1kmResampled_QGISAggr.jpg"),
+     width = 22, height = 14, units = "cm", res = 300)
+par(mfrow = c(1, 2), mar = c(4, 4, 4, 5))
+plot(ndvi1km_rstr, main = "NDVI 1km (original)")
+plot(qgis_resamp_europe_avrge, main = "NDVI 1km (resampled)") 
+dev.off()
+
+
 
 
 ## Comparison '300m-resampled-1km-R_Aggr' with '300m-resampled-1km-QGIS_Aggr' ####
