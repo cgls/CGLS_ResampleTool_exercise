@@ -184,6 +184,7 @@ r300m_resampled1km_Aggr <- aggregate(ndvi300m_rstr,
                                      overwrite = TRUE)
 Sys.time() - t0
 r300m_resampled1km_Aggr
+#r300m_resampled1km_Aggr <- raster('r300m_resampled1km_Aggr.tif')
 
 # plotting resampled map
 jpeg(paste0(path2save, "/r300m_resampled1km_Aggr.jpg"))
@@ -287,7 +288,42 @@ lm_obj_summary <- summary(lm_obj)
 round(lm_obj_summary$r.squared, 10) == round(rsmpl_df_pearson^2, 10)
 
 
+# Mapping the errors
+rsmpl_df <- data.frame(getValues(ndvi1km_rstr), getValues(r300m_resampled1km_Aggr))
+rsmpl_df$diff <- abs(rsmpl_df$getValues.ndvi1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr.)
 
+rsmpl_df_kk <- rsmpl_df[complete.cases(rsmpl_df), 1:3]
+head(rsmpl_df_kk)
+summary(rsmpl_df_kk$diff)
+quantile(rsmpl_df_kk$diff, seq(0, 1, 0.1), na.rm = TRUE)
+quantile(rsmpl_df_kk$diff, c(0.95, 0.98, 0.999), na.rm = TRUE)
+
+nrow(rsmpl_df_kk)
+nrow(rsmpl_df)
+
+head(rsmpl_df[!is.na(rsmpl_df$getValues.ndvi1km_rstr.), ])
+head(rsmpl_df)
+summary(rsmpl_df$diff)
+range(rsmpl_df$diff, na.rm = TRUE)
+quantile(rsmpl_df$diff, seq(0, 1, 0.1), na.rm = TRUE)
+quantile(rsmpl_df$diff, c(0.95, 0.98, 0.99), na.rm = TRUE)
+
+ndvi1km_rstr_errors <- ndvi1km_rstr
+ndvi1km_rstr_errors <- setValues(ndvi1km_rstr_errors, as.matrix(as.numeric(round(rsmpl_df$diff, 3))))
+ndvi1km_rstr_errors
+
+jpeg(paste0(path2save, "/ndvi1km_1kmResampled_RAggr_errors.jpg"))
+brks <- c( minValue(ndvi1km_rstr_errors), 0.1, maxValue(ndvi1km_rstr_errors))
+perc95 <- round(as.vector(quantile(rsmpl_df$diff, c(0.95), na.rm = TRUE)), 3)
+plot(ndvi1km_rstr_errors, col = c("white", "red"), colNA = "grey88", 
+     breaks = brks, 
+     legend = FALSE,
+     main = "Absolute Error:  |orig1km - resamp1km|  ",
+     sub = paste0("95th percentile = ", perc95)
+     )
+legend("bottom", legend = paste0("Absolute Error: ", perc95, " to ", maxValue(ndvi1km_rstr_errors)),
+       fill = "red", inset = 0.02)
+dev.off()
 
 
 
@@ -408,6 +444,5 @@ comp_results[3, 4] <- mae
 # Saving stuff for the report
 stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults_NDVI_europe_4Report.RData"))
-
 
 
