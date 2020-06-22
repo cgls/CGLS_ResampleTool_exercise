@@ -425,3 +425,23 @@ save(list = stuff2save, file = paste0(path2save, "/ResampleResults_lai_europe_4R
 
 
 
+
+
+
+
+## Testing modal() ####
+nc_file300m <- paste0(path2data, "/lai300_v1_333m/lai300_v1_333m_c_gls_LAI300_201905100000_GLOBE_PROBAV_V1.0.1.nc")
+#qgis_resamp_europe_avrge <- paste0(path2data, "/europa1000_aver.tif")
+lai_1km_orig <- paste0(path2data, "/lai_v2_1km/c_gls_LAI-RT6_201905100000_GLOBE_PROBAV_V2.0.1.nc")
+
+lai_1km_orig <- raster(lai_1km_orig, varname = "QFLAG")
+lai_1km_orig_Eur <- crop(lai_1km_orig, my_extent)
+lai1km_rstr <- lai_1km_orig_Eur
+
+length(unique(getValues(lai1km_rstr)))
+unique(getValues(lai1km_rstr))
+table(getValues(lai1km_rstr))
+
+
+
+

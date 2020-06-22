@@ -90,7 +90,7 @@ fig_num <- captioner::captioner(prefix = "Figure")
 
 The Copernicus Global Land Service (CGLS; https://land.copernicus.eu/global/) is a component of the Land Monitoring Core Service (LMCS) of Copernicus, the European flagship programme on Earth Observation. CGLS systematically produces and distributes time series of global bio-geophysical products on the status and evolution of the land surface, at different spatial resolutions. These products are used to monitor the vegetation, the water cycle, the energy budget and the terrestrial cryosphere. 
 
-The CGLS vegetation-related products (i.e. NDVI, LAI, FAPAR...), based on PROBA-V observations, have been distributed at 1km and 333m until June, 2020. As of July, 2020, all Near Real Time (NRT) production of the vegetation biophysical variables, based on Sentinel-3 observations, are no longer provided at 1km resolution. However, the users who might be interested on continuing their 1km time series can use a resample of the new 333m products.
+The CGLS vegetation-related products (i.e. NDVI, LAI, FAPAR...), based on PROBA-V observations, have been distributed at 1km and 333m until June, 2020. However, as of July, 2020, all Near Real Time (NRT) production of the vegetation biophysical variables, based on Sentinel-3 observations, are no longer provided at 1km resolution. Nonetheless, the users who might be interested on continuing their 1km time series can use a resample of the new 333m products.
 
 The science and production teams of the Global Land service, in support to the 1km users, provide different tools to make their own resampling exercises from the new 333m products to a 1km resolution, corresponding to the usual 1km grid. A Notebook with R code and some explanations can be found at https://nbviewer.jupyter.org/github/VITObelgium/notebook-samples/blob/master/datasets/probav/ResampleTool_R_notebook.ipynb. In addition, Python code to run in QGIS can be found in ...**Fede??**.
 
@@ -100,7 +100,7 @@ In this document we present a comparison of different resampled products using t
 
 # Materials and methods
 
-## Data sets
+## Data
 
 ```{r include = FALSE}
 work_extent_eur <- round(as.vector(my_extent_eur), 2)
@@ -119,17 +119,18 @@ fig_lai_300m_ama <- fig_num(name = "f_lai_300_ama", caption = "LAI map at 333m r
 orig_lai_300map <- paste0(path2save_LAI_Ama, "/lai_300m_orig_Amaz.jpg")
 ```
 
-The analysis was done using different subsets of several 10-daily CGLS vegetation-related global products (i.e. Normalized Difference Vegetation Index-NDVI and Leaf area index-LAI). The selected images (i.e. 1km and 333m resolution) were taken the `r img_date`, and the assessments were made in two different areas. On the one hand, NDVI resampled product was tested for Europe and North Africa (coordinates in Decimal Degrees `r work_extent_eur`) in order to have a wide representation of different landscapes. On the other hand, the LAI product was tested both using the same European-North African window and also on a subset from a tropical area (Amazonia; coordinates `r work_extent_ama`) in order to have as well a good representation of evergreen broadleaf forests. While `r fig_num("f_ndvi_300_eur", display = "cite")` shows the 333m NDVI working map used for the resampling in Europe-North Africa, `r fig_num("f_lai_300_ama", display = "cite")` shows the 333m LAI working map used for the Amazonian area.
+The analysis was done using different subsets of several 10-daily CGLS vegetation-related global products (i.e. Normalized Difference Vegetation Index-NDVI and Leaf area index-LAI). The selected images (i.e. 1km and 333m resolution) corresponded to the `r img_date`, 10-day period, and the assessments were made in two different areas. On the one hand, NDVI resampled product was tested for Europe and North Africa (coordinates in Decimal Degrees `r work_extent_eur`) in order to have a wide representation of different landscapes. On the other hand, the LAI product was tested both using the same European-North African window and also on a subset from a tropical area (Amazonia; coordinates `r work_extent_ama`) in order to have as well a good representation of evergreen broadleaf forests (EBF). While `r fig_num("f_ndvi_300_eur", display = "cite")` shows the 333m NDVI working map used for the resampling in Europe-North Africa, `r fig_num("f_lai_300_ama", display = "cite")` shows the 333m LAI working map used for the Amazonian area.
 
 ![`r fig_ndvi_300m_eur`](`r orig_ndvi_300map`)
 
 
 ![`r fig_lai_300m_ama`](`r orig_lai_300map`)
+&nbsp;
 
 
-The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, digital values in the netCDF (DN) > 250 are flagged and need to be converted into NA. When the netCDF files are read in as a *raster* object, the digital values are scaled into real NDVI values automatically. After that, all pixels with NDVI values bigger than 0.92 (= DN 250 x scale + offset) were set to NA. In the same way, LAI values bigger than 7 and smaller than 0, if any, were converted to NAs.
+The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, digital values in the netCDF (DN) > 250 are flagged and need to be converted into NA. When the netCDF files are read in as a *raster* object, the digital values are scaled into real NDVI values automatically. Therefore, after reading the files,  all pixels with NDVI values bigger than 0.92 (= DN 250 x scale + offset) were set to NA. In the same way, LAI values bigger than 7 and smaller than 0, if any, were converted to NAs.
 
-The information regarding flagged values, as well as other supporting information, can be seen in the netCDF file metadata. In addition, more details on the CGLS global products can be found in their Product User Manual documentation at https://land.copernicus.eu/global/products/. 
+The information regarding flagged values, as well as other supporting information, can be seen in the netCDF file metadata. In addition, more details on the CGLS global products can be found in their Product User Manual at https://land.copernicus.eu/global/products/. 
 
 
 
@@ -144,11 +145,11 @@ method_df <- table_num(name = "method_table", caption = "Best suited method reco
 ```
 
 
-There are several approaches to resample data from a finer to a coarser resolution. They can be grouped into area-based aggregation methods and point-based interpolation methods (e.g. Bilinear and Nearest Neighbour), and can be applied depending on the data type, etc. Preliminary tests run on NDVI products, not showed in this document, gave nearly equal results for both approaches.
+There are several approaches to resample data from a finer to a coarser resolution. They can be grouped into area-based aggregation methods and point-based interpolation methods (e.g. Bilinear and Nearest Neighbour), and can be applied depending on the data type and other considerations. Preliminary tests run on NDVI products, although not showed in this document, gave nearly equal results for both approaches.
 
-The aggregation method used in this assessment groups rectangular matrix of pixels of the finer resolution image to create a new map with larger cells. In this case, as we wanted to resample from 333m to 1km, a factor of 3 was implemented (i.e. a matrix of 3x3 pixels).
+The area-based aggregation method used in this assessment groups rectangular matrix of pixels of the finer resolution image to create a new map with larger cells. In this case, as we wanted to resample from 333m to 1km, a factor of 3 was implemented (i.e. a matrix of 3x3 pixels).
 
-On the one hand, for the R-based (R Core Team, 2019) method, the function *aggregate()* of the package *raster* (Hijmans, 2019) was used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For both the NDVI and the LAI products the most suitable method is the average. `r table_num("method_table", display = "cite")` shows a recommendation of the best suited method for each product/layer. In addition, as it is also recommended in the tool, it was included the condition that at least 5 out of the 9 pixels must have valid values (i.e. not NA) to return a valid value for the resampled pixel.
+On the one hand, for the R-based method (R Core Team, 2019), the function *aggregate()* of the package *raster* (Hijmans, 2019) was used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For both the NDVI and the LAI products the most suitable method is the average. `r table_num("method_table", display = "cite")` shows a recommendation of the best suited method for each product/layer. In addition, as it is also recommended in the tool, it was included the condition that at least 5 out of the 9 pixels had to have valid values (i.e. not NA) to return a valid value for the resampled pixel.
 
 
 `r pander(cutoff_method_df[, c(1:2, 8)], caption = method_df)`
@@ -185,13 +186,11 @@ names(comp_results) <-c("Assessment", "Pearson's *r*", "RMSE", "MAE")
 
 comp_results_df <- table_num(name = "comp_results_table", caption = "Pearson's *r*, Root Mean Square Error (RMSE) and Mean Absolute Error (MAE) of each case study")
 
-
-
 ```
 
-In this document we present five different assessments depending on the CGLS product analised, the area of study and the resampling tool in use. While three of them compare the resampling results obtained with the R-based tool (1 NDVI and 2 LAI) against the original 1km product, one analyses the QGIS/Python results (NDVI) against the same 1km product and another one compares the results of both tools (R vs QGIS/Python).
+In this document we present five different assessments depending on the CGLS product analysed, the area of study and the resampling tool in use. While three of them compare the resampling results obtained with the R-based tool (1 NDVI and 2 LAI) against the original 1km product, one analyses the QGIS/Python results (NDVI) against the same 1km product and another one compares the results of both tools (R vs QGIS/Python).
 
-`r table_num("comp_results_table", display = "cite")` summarizes the three metrics calculated in each assessment, so that an overview of all the cases is provided. In the following subsections each case will be developed in more detail separatedly. 
+`r table_num("comp_results_table", display = "cite")` summarizes the three metrics calculated in each assessment, so that an overview of all the cases is provided. In the following subsections each case will be developed separately and in more detail. 
 
 `r pander(comp_results, caption = comp_results_df)`
 &nbsp;
@@ -213,11 +212,13 @@ orig_Raggr_NDVI_eur_scat <- paste0(path2save_NDVI_Eur, "/resample_correlation_RA
 To have a first impression of the results of the resample tool, `r fig_num("f_1km_1km_Raggr_NDVI_eur", display = "cite")` shows both the original NDVI map at 1km resolution for the region of study (Europe and North Africa) and the resampled one to 1km using the R-based tool. 
 
 ![`r fig_1km_1km_Raggr_NDVI_eur`](`r orig_Raggr_NDVI_eur`)
+&nbsp;
 
 As it can be seen in the scatterplot (`r fig_num("f_1km_1km_Raggr_NDVI_eur_scat", display = "cite")`), and corroborated by the Pearson correlation coefficient (Pearson's *r* = `r comp_results[1, 2]`; `r table_num("comp_results_table", display = "cite")`), there was a good level of correlation among the original 1km map and the resampled one using the R tool. In addition, considering that NDVI values ranged from -0.08	to 0.92, also RMSE and MAE reported good levels of 'error' among the two maps (`r paste0(comp_results[1, 3], " and ", comp_results[1, 4], ", respectively")`). 
 
 
 ![`r fig_1km_1km_Raggr_NDVI_eur_scat`](`r orig_Raggr_NDVI_eur_scat`)
+&nbsp;
 
 
 
@@ -236,10 +237,12 @@ orig_QGISaggr_NDVI_eur_scat <- paste0(path2save_NDVI_Eur, "/resample_correlation
 `r fig_num("f_1km_1km_QGISaggr_NDVI_eur", display = "cite")` shows respectively the original NDVI map at 1km resolution and the resampled one to 1km using the QGIS/Python-based tool for Europe/North Africa. 
 
 ![`r fig_1km_1km_QGISaggr_NDVI_eur`](`r orig_QGISaggr_NDVI_eur`)
+&nbsp;
 
 Similarly to the performance of the R tool, the following scatterplot (`r fig_num("f_1km_1km_QGISaggr_NDVI_eur_scat", display = "cite")`) together with the correlation coefficient (Pearson's *r* = `r comp_results[2, 2]`; `r table_num("comp_results_table", display = "cite")`), also show a good level of correlation among the original 1km map and the resampled one using the QGIS/Pyhton tool. In addition, also the reported RMSE and MAE gave similar, therefore good, levels of 'error' among the two maps (`r paste0(comp_results[2, 3], " and ", comp_results[2, 4], ", respectively")`). 
 
 ![`r fig_1km_1km_QGISaggr_NDVI_eur_scat`](`r orig_QGISaggr_NDVI_eur_scat`)
+&nbsp;
 
 
 
@@ -251,49 +254,76 @@ orig_R_QGISaggr_NDVI_eur_scat <- paste0(path2save_NDVI_Eur, "/resample_correlati
 
 ```
 
-The following scatterplot (`r fig_num("f_1km_1km_QGISaggr_NDVI_eur_scat", display = "cite")`) represents the correlation between the resampled map values using the two tools presented in this assessment. It shows a very high correlation between them, reporting a correlation coefficient (Pearson's *r*) of `r comp_results[3, 2]` (`r table_num("comp_results_table", display = "cite")`). Additionally, RMSE and MAE were `r comp_results[3, 3]` and `r comp_results[3, 4]`, respectively.
+The following scatterplot (`r fig_num("f_1km_1km_R_QGISaggr_NDVI_eur_scat", display = "cite")`) represents the correlation between the resampled map values using the two tools presented in this document and showed in the previous subsections. It could be seen a very high correlation between them, reporting a correlation coefficient (Pearson's *r*) of `r comp_results[3, 2]` (`r table_num("comp_results_table", display = "cite")`). Additionally, RMSE and MAE were `r comp_results[3, 3]` and `r comp_results[3, 4]`, respectively.
 
 
 ![`r fig_1km_1km_R_QGISaggr_NDVI_eur_scat`](`r orig_R_QGISaggr_NDVI_eur_scat`)
+&nbsp;
 
 
-In light of the two assessments made on both the R-based and the QGIS/Python-based tools, as well as the results showed in this subsection, it can be confirmed that both tools can be equally used, only based on user's preferences.
+In light of the two assessments made on both the R-based and the QGIS/Python-based tools, as well as the results showed in this subsection, it can be confirmed that both tools can be equally used, only depending on user's preferences.
 
 
 
 ## R-based tool vs the original 1km product: LAI - Europe/North Africa
+```{r echo = FALSE}
+fig_1km_1km_Raggr_LAI_eur <- fig_num(name = "f_1km_1km_Raggr_LAI_eur", caption = "Original LAI map at 1km resolution and the resampled one using the R-based tool for Europe/North Africa")
+orig_Raggr_LAI_eur <- paste0(path2save_LAI_Eur, "/lai1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_LAI_eur_scat <- fig_num(name = "f_1km_1km_Raggr_LAI_eur_scat", caption = "Scatter plot displaying a random subset (1%) of pixel values of the 1km original LAI product against the values of the same pixels of the resampled map using the R tool (blue points) for Europe/North Africa. Also the regression (red) line")
+orig_Raggr_LAI_eur_scat <- paste0(path2save_LAI_Eur, "/resample_correlation_RAggr.jpg")
+
+```
+
+
+The resulting resampled map of the R-based tool for LAI in the study area of Europe and North Africa, together with the original 1km map, can both be seen in `r fig_num("f_1km_1km_Raggr_LAI_eur", display = "cite")`. 
+
+![`r fig_1km_1km_Raggr_LAI_eur`](`r orig_Raggr_LAI_eur`)
+&nbsp;
+
+As it can be observed, the scatterplot (`r fig_num("f_1km_1km_Raggr_LAI_eur_scat", display = "cite")`) and the correlation coefficient (Pearson's *r* = `r comp_results[4, 2]`; `r table_num("comp_results_table", display = "cite")`) showed a good level of correlation among the original 1km map and the resampled one using the R-based tool, although slightly lower than the results of the NDVI product in the same region. In addition, considering that LAI values ranged from 0 to 7, also RMSE and MAE reported good values between the two maps (`r paste0(comp_results[4, 3], " and ", comp_results[4, 4], ", respectively")`). 
+
+
+![`r fig_1km_1km_Raggr_LAI_eur_scat`](`r orig_Raggr_LAI_eur_scat`)
+&nbsp;
+
+
 
 
 
 
 ## R-based tool vs the original 1km product: LAI - Amazonia
+```{r echo = FALSE}
+fig_1km_1km_Raggr_LAI_ama <- fig_num(name = "f_1km_1km_Raggr_LAI_ama", caption = "Original LAI map at 1km resolution and the resampled one using the R-based tool for the Amazonian study area")
+orig_Raggr_LAI_ama <- paste0(path2save_LAI_Ama, "/lai1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_LAI_ama_scat <- fig_num(name = "f_1km_1km_Raggr_LAI_ama_scat", caption = "Scatter plot displaying a random subset (1%) of pixel values of the 1km original LAI product against the values of the same pixels of the resampled map using the R tool (blue points) for the Amazonian region. Also the regression (red) line")
+orig_Raggr_LAI_ama_scat <- paste0(path2save_LAI_Ama, "/resample_correlation_RAggr.jpg")
+
+```
 
 
+In `r fig_num("f_1km_1km_Raggr_LAI_ama", display = "cite")`, showing both the original 1km map and the resampled one using the R-based tool for LAI in the Amazonian study area, it can already be seen that the tool’s performance for the tropical areas (EBF) is lower than for non-EBF areas.
 
+![`r fig_1km_1km_Raggr_LAI_ama`](`r orig_Raggr_LAI_ama`)
+&nbsp;
 
+Both the scatterplot (`r fig_num("f_1km_1km_Raggr_LAI_ama_scat", display = "cite")`) and the statistics corroborated the worse results than for other areas and/or products. While Pearson's *r* was `r comp_results[5, 2]`, RMSE and MAE were `r comp_results[5, 3]` and `r comp_results[5, 4]`, respectively (`r table_num("comp_results_table", display = "cite")`).
 
+![`r fig_1km_1km_Raggr_LAI_ama_scat`](`r orig_Raggr_LAI_ama_scat`)
+&nbsp;
 
-
-
-
-
-
-
-
-
-
-
+These poorer results might be mainly due to the differences in the temporal composition and the cloud gap filling method used for the production of the 1km and the 300m products. In this sense, for the former, a more complex algorithm was implemented in the processing chain in order to improve the final generated 10-day vegetation-related global product, especially in EBFs, such is the case for the Amazonian rainforest. 
 
 
 
 
 # Conclusions
 
-In this document we show...
+After the discontinuity on the supply of NRT vegetation-related products at 1km resolution, the Global Land service has made available two resample tools based on different programming languages (i.e. R and QGIS/Python) in order to ease the users to keep producing their own time series at that resolution. In this document we show several assessments made on the performance of these two tools in resampling different 300m products (i.e. NDVI and LAI) and in different landscape typologies (i.e. EBF and non-EBF).
 
-differences in the temporal composition of the 300m and 1km products
+The results showed similar and good performance of the two tools in non-EBF landscapes, both for NDVI and for LAI products. In contrast, the evaluation of the resample results of LAI in an EBF area in the Amazonia gave poorer results. This fact is likely due to the different algorithm implemented in the production of the 10-day vegetation-related global products at 1km and 300m resolution. In light of this, the users must be aware of these differences when using these two tools or any other resampling approach. 
 
-Both methods assessed (i.e. R-based and Python-based) perform equally well. Therefore, both can be used indistinctly, depending only on the user's preferences. 
 
 
 # References

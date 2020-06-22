@@ -21,6 +21,7 @@ library(raster)
 library(rgdal)
 library(lattice)
 library(sf)
+library(plotrix)
 
 if(Sys.info()[4] == "D01RI1700371"){
   path2data <- "E:/rotllxa/lai_resample/lai_data"
@@ -216,8 +217,18 @@ dev.off()
 jpeg(paste0(path2save, "/lai1km_1kmResampled_RAggr.jpg"),
      width = 22, height = 14, units = "cm", res = 300)
 par(mfrow = c(1, 2), mar = c(4, 4, 4, 5))
-plot(lai1km_rstr, main = "LAI 1km (original)")
-plot(r300m_resampled1km_Aggr, main = "LAI 1km (resampled)") 
+plot(lai1km_rstr, col = rev(terrain.colors(704))[-c(1:40)], 
+     breaks = seq(0, 7, 0.01), 
+     legend = FALSE,
+     main = "LAI 1km (original)")
+color.legend(-62, -6, -61.8, 0, as.character(seq(0, 7, 1)), 
+             rev(terrain.colors(704))[-c(1:40)], gradient = "y", align = "rb")
+plot(r300m_resampled1km_Aggr, col = rev(terrain.colors(704))[-c(1:40)], 
+     breaks = seq(0, 7, 0.01), 
+     legend = FALSE,
+     main = "LAI 1km (resampled)") 
+color.legend(-62, -6, -61.8, 0, as.character(seq(0, 7, 1)), 
+             rev(terrain.colors(704))[-c(1:40)], gradient = "y", align = "rb")
 dev.off()
 
 
