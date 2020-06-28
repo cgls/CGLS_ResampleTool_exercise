@@ -152,7 +152,7 @@ The area-based aggregation method used in this assessment groups rectangular mat
 On the one hand, for the R-based method (R Core Team, 2019), the function *aggregate()* of the package *raster* (Hijmans, 2019) was used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For both the NDVI and the LAI products the most suitable method is the average. `r table_num("method_table", display = "cite")` shows a recommendation of the best suited method for each product/layer. In addition, as it is also recommended in the tool, it was included the condition that at least 5 out of the 9 pixels had to have valid values (i.e. not NA) to return a valid value for the resampled pixel.
 
 
-`r pander(cutoff_method_df[, c(1:2, 8)], caption = method_df)`
+`r pander(cutoff_method_df[, c(1:3, 9)], caption = method_df)`
 &nbsp;
 
 On the other hand, for the Python-based (Van Rossum, G. & Drake, F.L., 2009) method implemented for QGIS (QGIS Development Team, 2009).... **Fede**
