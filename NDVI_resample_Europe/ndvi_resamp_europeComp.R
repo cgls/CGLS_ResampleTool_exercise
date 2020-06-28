@@ -38,7 +38,7 @@ if(Sys.info()[4] == "D01RI1700371"){
 setwd(path2save)
   
 nc_file300m <- paste0(path2data, "/c_gls_NDVI300_PROD-DESC_202005010000_GLOBE_PROBAV_V1.0.1.nc")
-qgis_resamp_europe_avrge <- paste0(path2data, "/europa1000_aver.tif")
+qgis_resamp_europe_avrge <- paste0(path2data, "/c_gls_NDVI300_201905110000_GLOBE_PROBAV_V1.0.1.nc.tif")
 ndvi_1km_orig <- paste0(path2data, "/ndvi_v2_1km_c_gls_NDVI_202005010000_GLOBE_PROBAV_V2.2.1.nc")
 
 
@@ -47,36 +47,72 @@ ndvi_1km_orig <- paste0(path2data, "/ndvi_v2_1km_c_gls_NDVI_202005010000_GLOBE_P
 
 qgis_resamp_europe_avrge <- raster(qgis_resamp_europe_avrge)
 
-qgis_resamp_europe_avrge <- projectRaster(from = qgis_resamp_europe_avrge, 
-                                          res = (1/112),
-                                          crs = CRS('+init=EPSG:4326'), 
-                                          method="bilinear", 
-                                          alignOnly=FALSE, over=FALSE, 
-                                          filename="") 
-qgis_resamp_europe_avrge
+#qgis_resamp_europe_avrge <- projectRaster(from = qgis_resamp_europe_avrge, 
+#                                          res = (1/112),
+#                                          crs = CRS('+init=EPSG:4326'), 
+#                                          method="bilinear", 
+#                                          alignOnly=FALSE, over=FALSE, 
+#                                          filename="") 
+#qgis_resamp_europe_avrge
+#
+qgis_extent <- extent(qgis_resamp_europe_avrge)
 
-my_extent <- extent(qgis_resamp_europe_avrge)
 
 # Checking correspondence with 1km PROBA-V products
 # The following vectors contain Long and Lat coordinates, respectively, of the 1km grid (cell boundaries):
 x_ext <- seq((-180 - ((1 / 112) / 2)), 180, (1/112))
 y_ext <- seq((80 + ((1 / 112) / 2)), - 60, - (1/112))
 
-if(!all(round(my_extent[1], 7) %in% round(x_ext, 7) &
-        round(my_extent[2], 7) %in% round(x_ext, 7) &
-        round(my_extent[3], 7) %in% round(y_ext, 7) &
-        round(my_extent[4], 7) %in% round(y_ext, 7))){
-  # The given extent from raster or coordinate vector does not fit into the 1km PROBA-V grid, so we are going to adjust it
-  for(crd in 1:length(as.vector(my_extent))){
-    if(crd <= 2){
-      my_extent[crd] <- x_ext[order(abs(x_ext - my_extent[crd]))][1]
-    }else{
-      my_extent[crd] <- y_ext[order(abs(y_ext - my_extent[crd]))][1]
-    }
-  }
-  print("'my_extent' coordinates have been adjusted")
+if(all(round(qgis_extent[1], 7) %in% round(x_ext, 7) &
+       round(qgis_extent[2], 7) %in% round(x_ext, 7) &
+       round(qgis_extent[3], 7) %in% round(y_ext, 7) &
+       round(qgis_extent[4], 7) %in% round(y_ext, 7))){
+  print("ndvi_1km_orig extent matches PROBA-V products")
+}else{
+  stop("ndvi_1km_orig extent does NOT match PROBA-V products!!!")
+}   
+
+#if(!all(round(qgis_extent[1], 7) %in% round(x_ext, 7) &
+#        round(qgis_extent[2], 7) %in% round(x_ext, 7) &
+#        round(qgis_extent[3], 7) %in% round(y_ext, 7) &
+#        round(qgis_extent[4], 7) %in% round(y_ext, 7))){
+#  # The given extent from raster or coordinate vector does not fit into the 1km PROBA-V grid, so we are going to adjust it
+#  for(crd in 1:length(as.vector(qgis_extent))){
+#    if(crd <= 2){
+#      qgis_extent[crd] <- x_ext[order(abs(x_ext - qgis_extent[crd]))][1]
+#    }else{
+#      qgis_extent[crd] <- y_ext[order(abs(y_ext - qgis_extent[crd]))][1]
+#    }
+#  }
+#  print("'qgis_extent' coordinates have been adjusted")
+#}
+as.vector(qgis_extent)
+
+
+# Extent Europe/North Africa
+kk <- raster(paste0("/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/NDVI_resample_Europe", "/r300m_resampled1km_Aggr.tif"))
+my_extent <- extent(kk)
+
+
+if(any(res(kk) != res(qgis_resamp_europe_avrge))){
+  stop("There's a problem with pixel's size!!!")
 }
-as.vector(my_extent)
+
+
+# Cropping 'qgis_resamp_europe_avrge'
+qgis_resamp_europe_avrge <- crop(qgis_resamp_europe_avrge, my_extent)
+qgis_resamp_europe_avrge
+
+if(all(round(extent(qgis_resamp_europe_avrge)[1], 7) %in% round(x_ext, 7) &
+       round(extent(qgis_resamp_europe_avrge)[2], 7) %in% round(x_ext, 7) &
+       round(extent(qgis_resamp_europe_avrge)[3], 7) %in% round(y_ext, 7) &
+       round(extent(qgis_resamp_europe_avrge)[4], 7) %in% round(y_ext, 7))){
+  print("ndvi_1km_orig extent matches PROBA-V products")
+}else{
+  stop("ndvi_1km_orig extent does NOT match PROBA-V products!!!")
+}   
+
+
 
 
 ## Reading in data 1km global ####
