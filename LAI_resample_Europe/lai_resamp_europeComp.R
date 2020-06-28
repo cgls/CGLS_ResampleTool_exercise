@@ -430,18 +430,131 @@ save(list = stuff2save, file = paste0(path2save, "/ResampleResults_lai_europe_4R
 
 
 ## Testing modal() ####
+ndvi_1km_orig <- paste0(path2data, "/ndvi_v2_1km_c_gls_NDVI_202005010000_GLOBE_PROBAV_V2.2.1.nc")
+nc_file300m <- paste0(path2data, "/c_gls_NDVI300_PROD-DESC_202005010000_GLOBE_PROBAV_V1.0.1.nc")
 nc_file300m <- paste0(path2data, "/lai300_v1_333m/lai300_v1_333m_c_gls_LAI300_201905100000_GLOBE_PROBAV_V1.0.1.nc")
-#qgis_resamp_europe_avrge <- paste0(path2data, "/europa1000_aver.tif")
 lai_1km_orig <- paste0(path2data, "/lai_v2_1km/c_gls_LAI-RT6_201905100000_GLOBE_PROBAV_V2.0.1.nc")
 
-lai_1km_orig <- raster(lai_1km_orig, varname = "QFLAG")
+kk <- raster(paste0("/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/NDVI_resample_Europe", "/r300m_resampled1km_Aggr.tif"))
+my_extent <- extent(kk)
+
+
+#ndvi_1km_orig <- raster(ndvi_1km_orig, varname = "NOBS")
+#ndvi_300m_orig <- raster(nc_file300m, varname = "NOBS")
+lai_1km_orig <- raster(lai_1km_orig, varname = "NOBS")
+lai_1km_orig <- raster(lai_1km_orig, varname = "LENGTH_BEFORE")
 lai_1km_orig_Eur <- crop(lai_1km_orig, my_extent)
 lai1km_rstr <- lai_1km_orig_Eur
 
 length(unique(getValues(lai1km_rstr)))
-unique(getValues(lai1km_rstr))
+sort(unique(getValues(lai1km_rstr)))
+range(getValues(lai1km_rstr), na.rm = TRUE)
 table(getValues(lai1km_rstr))
+View(table(getValues(lai1km_rstr)))
+(sum(getValues(lai1km_rstr) > 40, na.rm = T) * 100) / length(getValues(lai1km_rstr)) # 6.149776
 
+
+nc_file300m <- raster(nc_file300m, varname = "NOBSS")
+nc_file300m <- raster(nc_file300m, varname = "LENGTH_BEFORE")
+lai_300m_orig_Eur <- crop(nc_file300m, my_extent)
+lai300m_rstr <- lai_300m_orig_Eur
+
+vals <- getValues(lai300m_rstr)
+length(unique(vals))
+sort(unique(vals))
+range(vals, na.rm = TRUE)
+table(vals)
+View(table(vals))
+summary(vals)
+summary(as.data.frame(lai300m_rstr))
+
+
+# Converting flagged values to NAs
+cuttoff_NA_err <- 7.000001  # everything >= cuttoff_NA_err, must be removed for the calculations
+cuttoff_NA_err_min <- -0.000001  # everything <= cuttoff_NA_err_min, must be removed for the calculations
+
+# 300m product
+lai300m_rstr[lai300m_rstr > cuttoff_NA_err] <- NA  # setting to NA
+lai300m_rstr[lai300m_rstr < cuttoff_NA_err_min] <- NA  # setting to NA
+
+# 1km product
+lai1km_rstr[lai1km_rstr > cuttoff_NA_err] <- NA   # setting to NA
+lai1km_rstr[lai1km_rstr < cuttoff_NA_err_min] <- NA   # setting to NA
+
+## Resampling using aggregate()
+modal_w.cond <- function(x, ...){ # modal including condition 'minimum 5 valid pixels'
+  n_valid <- sum(!is.na(x)) # number of cells with valid value
+  if(n_valid > 4){
+    dts <- list(...)
+    if(is.null(dts$na_rm)) dts$na_rm <- TRUE
+    x_modal <- modal(x, na.rm = dts$na_rm)
+    return(x_modal)
+  }else{
+    x_modal <- NA
+    return(x_modal)
+  }
+}
+
+aggr_method <- "modal_w.cond"
+t0 <- Sys.time()
+r300m_resampled1km_Aggr_QFLAG <- aggregate(lai300m_rstr,
+                                           fact = 3, # from 333m to 1km  
+                                           fun = aggr_method, 
+                                           na.rm = TRUE, 
+                                           filename = 'r300m_resampled1km_Aggr_QFLAG.tif',
+                                           overwrite = TRUE)
+Sys.time() - t0
+r300m_resampled1km_Aggr_QFLAG
+
+
+comp_results[2, 1] <- "orig-1km__resampl-1km-R-Aggreg_QFLAG"
+rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(r300m_resampled1km_Aggr_QFLAG))
+
+sum(complete.cases(rsmpl_df))
+rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
+
+# Pearson's correlation coefficient
+rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
+rsmpl_df_pearson
+rsmpl_df_pearson^2  # if we fit a linear regression (see below), this is R^2 (R squared)
+comp_results[2, 2] <- rsmpl_df_pearson
+
+# Plotting correlation (scatterplot)
+perc_subsample <- 1   # percentage of points for plotting
+num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
+rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
+
+jpeg(paste0(path2save, "/resample_correlation_RAggr_QFLAG.jpg"))
+xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr_QFLAG. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
+       type = c("p", "r"),
+       col.line = "red",
+       xlab = "1km original LAI-QFLAG product",
+       ylab = "1km resampled LAI-QFLAG image (R)",
+       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
+       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
+)
+dev.off()
+
+
+# Calculating differences (errors)
+head(rsmpl_df)
+rsmpl_df$diff <- abs(rsmpl_df$getValues.lai1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr_QFLAG.)
+summary(rsmpl_df$diff)
+
+# Root Mean Square Error (RMSE; the lower, the better)
+# In GIS, the RMSD is one measure used to assess the accuracy of spatial analysis and remote sensing.
+rmse <- sqrt(mean((rsmpl_df$diff)^2)) 
+comp_results[2, 3] <- rmse
+
+# Mean Absolute Error (MAE; the lower, the better)
+mae <- mean(rsmpl_df$diff)
+comp_results[2, 4] <- mae
+
+
+
+# Saving stuff for the report
+stuff2save <- c("comp_results", "my_extent", "img_date")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_lai_europe_4Report.RData"))
 
 
 
