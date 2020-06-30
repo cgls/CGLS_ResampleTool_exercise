@@ -1,0 +1,12 @@
+ndvi300m_eur.tif
+r300m_resampled1km_Aggr.tif
+resample_correlation_RAggr_100%.jpg
+*.lua
+*.docx
+ResampleResults4Report.RData
+ndvi_300m_orig_Eur.jpg
+*.jpg
+*.tif
+ResampleResults_NDVI_europe_4Report.RData
+ResampleResults_LAI_amazonia_4Report.RData
+ResampleResults_LAI_europe_4Report.RData
