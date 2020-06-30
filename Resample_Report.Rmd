@@ -24,20 +24,11 @@ date: "`r format(Sys.time(), '%d/%m/%Y')`"
 
 output: 
   word_document:
-    reference_docx: /Users/xavi_rp/Documents/D6_LPD/LPD/ATBD/LPD_MS_styles.docx
-    #toc: true #table of content true
-    toc_depth: 3  #up to three depths of headings (specified by #, ## and ###)
-    #number_sections: true  #number sections at each table header
-    #theme: united  #options for theme
-    #highlight: tango  #syntax highlighting style
-    #css: style.css   #custom css, should be in same folder. Only for HTML
+    reference_docx: MS_styles.docx
     fig_caption: yes
     pandoc_args:
       - --lua-filter=scholar-metadata.lua
       - --lua-filter=author-info-blocks.lua
-      
-#bibliography: lpd_biblio.bib
-#csl: methods-in-ecology-and-evolution.csl
 always_allow_html: yes
 ---
 
