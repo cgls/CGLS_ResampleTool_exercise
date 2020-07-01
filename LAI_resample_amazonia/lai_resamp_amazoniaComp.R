@@ -39,26 +39,13 @@ if(Sys.info()[4] == "D01RI1700371"){
 setwd(path2save)
 
 nc_file300m <- paste0(path2data, "/lai300_v1_333m/lai300_v1_333m_c_gls_LAI300_201905100000_GLOBE_PROBAV_V1.0.1.nc")
-#qgis_resamp_amazonia_avrge <- paste0(path2data, "/amazonia1000_aver.tif")
 lai_1km_orig <- paste0(path2data, "/lai_v2_1km/c_gls_LAI-RT6_201905100000_GLOBE_PROBAV_V2.0.1.nc")
 
 
 
-## Reading in data QGIS resampled average ####
+## Amazonian working extent ####
 
-#qgis_resamp_amazonia_avrge <- raster(qgis_resamp_amazonia_avrge)
-#
-#qgis_resamp_amazonia_avrge <- projectRaster(from = qgis_resamp_amazonia_avrge, 
-#                                          res = (1/112),
-#                                          crs = CRS('+init=EPSG:4326'), 
-#                                          method="bilinear", 
-#                                          alignOnly=FALSE, over=FALSE, 
-#                                          filename="") 
-#qgis_resamp_amazonia_avrge
-#
-#my_extent <- extent(qgis_resamp_amazonia_avrge)
 my_extent <- extent(-70, -63, -5.5, -0.2)
-
 
 
 # Checking correspondence with 1km PROBA-V products
@@ -137,7 +124,8 @@ if(all(round(extent(lai_300m_orig_Amaz)[1], 7) %in% round(x_ext, 7) &
 
 ## Dealing with "flagged values" ####
 # "flagged values" are those corresponding to water bodies, NAs, etc. 
-# They have lai values > cuttoff_NA_err (0.92), or assigned values in the NetCDF between 251 and 255.
+# They have LAI values > cuttoff_NA_err (7.00), or assigned values in the NetCDF between 251 and 255.
+# They have LAI values < cuttoff_NA_err_min (0.00), or assigned values in the NetCDF between 251 and 255.
 # We might want to "remove" them from the average calculations as they are highly influencing such averages,
 # driving to wrong predictions.
 
@@ -187,6 +175,8 @@ mean_w.cond <- function(x, ...){ # mean including condition 'minimum 5 valid pix
   }
 }
 
+
+aggr_method <- "mean"
 aggr_method <- "mean_w.cond"
 t0 <- Sys.time()
 r300m_resampled1km_Aggr <- aggregate(lai300m_rstr,
@@ -232,6 +222,34 @@ color.legend(-62, -6, -61.8, 0, as.character(seq(0, 7, 1)),
 dev.off()
 
 
+
+
+## Resampling using aggregate() / percentile ####
+quant_w.cond <- function(x, perc = 0.5, ...){ # mean including condition 'minimum 5 valid pixels'
+  n_valid <- sum(!is.na(x)) # number of cells with valid value
+  if(n_valid > 4){
+    dts <- list(...)
+    if(is.null(dts$na_rm)) dts$na_rm <- TRUE
+    x_quant <- quantile(x, perc, na.rm = dts$na_rm)
+    return(x_quant)
+  }else{
+    x_quant <- NA
+    return(x_quant)
+  }
+}
+
+aggr_method <- "quant_w.cond"
+t0 <- Sys.time()
+r300m_resampled1km_Aggr_quant <- aggregate(lai300m_rstr,
+                                           fact = 3, # from 333m to 1km  
+                                           fun = aggr_method, 
+                                           na.rm = TRUE, 
+                                           #filename = 'r300m_resampled1km_Aggr.tif',
+                                           overwrite = TRUE
+                                           )
+Sys.time() - t0
+r300m_resampled1km_Aggr_quant
+r300m_resampled1km_Aggr <- r300m_resampled1km_Aggr_quant
 
 
 ## Resampling using resample() ####
@@ -302,128 +320,6 @@ comp_results[1, 4] <- mae
 # Saving stuff for the report
 stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
-
-
-
-# Bivariate Linear Regression
-lm_obj <- lm(rsmpl_df$getValues.lai1km_rstr. ~ rsmpl_df$getValues.r300m_resampled1km_Aggr.)
-summary(lm_obj)
-lm_obj_summary <- summary(lm_obj)
-round(lm_obj_summary$r.squared, 10) == round(rsmpl_df_pearson^2, 10)
-
-
-
-
-
-
-## Comparison 'original-1km' with '300m-resampled-1km-QGIS_Aggr' ####
-comp_results[2, 1] <- "orig-1km__resampl-1km-QGIS-Aggreg"
-
-rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(qgis_resamp_amazonia_avrge))
-rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
-
-# Pearson's correlation coefficient
-rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
-comp_results[2, 2] <- rsmpl_df_pearson
-
-# Plotting correlation (scatterplot)
-#perc_subsample <- 1   # percentage of points for plotting
-num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
-rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
-
-jpeg(paste0(path2save, "/resample_correlation_QGISAggr.jpg"))
-xyplot(rsmpl_df_subsample$getValues.qgis_resamp_amazonia_avrge. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
-       type = c("p", "r"),
-       col.line = "red",
-       xlab = "1km original lai product",
-       ylab = "1km resampled lai image (QGIS)",
-       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
-       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
-)
-dev.off()
-
-
-# Calculating differences (errors)
-head(rsmpl_df)
-rsmpl_df$diff <- abs(rsmpl_df$getValues.lai1km_rstr. - rsmpl_df$getValues.qgis_resamp_amazonia_avrge.)
-rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.lai1km_rstr., 1) - round(rsmpl_df$getValues.qgis_resamp_amazonia_avrge., 1))
-
-summary(rsmpl_df$diff)
-summary(rsmpl_df$diff1)
-quantile(rsmpl_df$diff1, seq(0, 1, 0.1))
-
-1/250 # 0.004 is the amount of physical or real value (for lai, -0,08:0.92) 
-# for each digital number (0:250), so at least 3 decimals should be included
-#
-
-# Root Mean Square Error (RMSE; the lower, the better)
-# In GIS, the RMSD is one measure used to assess the accuracy of spatial analysis and remote sensing.
-rmse <- sqrt(mean((rsmpl_df$diff)^2)) 
-comp_results[2, 3] <- rmse
-
-# Mean Absolute Error (MAE; the lower, the better)
-mae <- mean(rsmpl_df$diff)
-comp_results[2, 4] <- mae
-
-
-
-
-## Comparison '300m-resampled-1km-R_Aggr' with '300m-resampled-1km-QGIS_Aggr' ####
-comp_results[3, 1] <- "resampl-1km-R-Aggreg__resampl-1km-QGIS-Aggreg"
-
-rsmpl_df <- data.frame(getValues(r300m_resampled1km_Aggr), getValues(qgis_resamp_amazonia_avrge))
-rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
-
-# Pearson's correlation coefficient
-rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
-comp_results[3, 2] <- rsmpl_df_pearson
-
-# Plotting correlation (scatterplot)
-#perc_subsample <- 1   # percentage of points for plotting
-num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
-rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
-
-jpeg(paste0(path2save, "/resample_correlation_R_QGIS_Aggr.jpg"))
-xyplot(rsmpl_df_subsample$getValues.qgis_resamp_amazonia_avrge. ~ rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr., 
-       type = c("p", "r"),
-       col.line = "red",
-       xlab = "1km resampled lai image (R)",
-       ylab = "1km resampled lai image (QGIS)",
-       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
-       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
-)
-dev.off()
-
-
-# Calculating differences (errors)
-head(rsmpl_df)
-rsmpl_df$diff <- abs(rsmpl_df$getValues.r300m_resampled1km_Aggr. - rsmpl_df$getValues.qgis_resamp_amazonia_avrge.)
-rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 1) - round(rsmpl_df$getValues.qgis_resamp_amazonia_avrge., 1))
-
-summary(rsmpl_df$diff)
-summary(rsmpl_df$diff1)
-quantile(rsmpl_df$diff1, seq(0, 1, 0.1))
-
-1/250 # 0.004 is the amount of physical or real value (for lai, -0,08:0.92) 
-# for each digital number (0:250), so at least 3 decimals should be included
-#
-
-# Root Mean Square Error (RMSE; the lower, the better)
-# In GIS, the RMSD is one measure used to assess the accuracy of spatial analysis and remote sensing.
-rmse <- sqrt(mean((rsmpl_df$diff)^2)) 
-comp_results[3, 3] <- rmse
-
-# Mean Absolute Error (MAE; the lower, the better)
-mae <- mean(rsmpl_df$diff)
-comp_results[3, 4] <- mae
-
-
-
-
-
-# Saving stuff for the report
-stuff2save <- c("comp_results", "my_extent", "img_date")
-save(list = stuff2save, file = paste0(path2save, "/ResampleResults_lai_amazonia_4Report.RData"))
 
 
 
