@@ -53,6 +53,9 @@ if(Sys.info()[4] == "D01RI1700371"){
   path2save_LAI_Eur <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/LAI_resample_Europe"
   path2save_LAI_Ama <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/LAI_resample_amazonia"
   path2save_NDVI_Eur <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/NDVI_resample_Europe"
+  path2save_FAPAR_Eur <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/FAPAR_resample_Europe"
+  path2save_FAPAR_Ama <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/FAPAR_resample_amazonia"
+  path2save_FAPAR_WAfr <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/FAPAR_resample_WAfrica"
 }else{
   stop("Define your machine before to run LPD")
 }
@@ -60,11 +63,21 @@ if(Sys.info()[4] == "D01RI1700371"){
 load(file = paste0(path2save_NDVI_Eur, "/ResampleResults_NDVI_europe_4Report.RData"), verbose = FALSE)
 comp_results_NDVI_Eur <- comp_results
 my_extent_eur <- my_extent
+img_date_ndvi <- img_date
 load(file = paste0(path2save_LAI_Eur, "/ResampleResults_LAI_europe_4Report.RData"), verbose = FALSE)
 comp_results_LAI_Eur <- comp_results
 load(file = paste0(path2save_LAI_Ama, "/ResampleResults_LAI_amazonia_4Report.RData"), verbose = FALSE)
 comp_results_LAI_Ama <- comp_results
 my_extent_ama <- my_extent
+img_date_lai <- img_date
+load(file = paste0(path2save_FAPAR_Ama, "/ResampleResults_fapar_amazonia_4Report.RData"), verbose = FALSE)
+comp_results_FAPAR_Ama <- comp_results
+img_date_fapar <- img_date
+load(file = paste0(path2save_FAPAR_Eur, "/ResampleResults_fapar_europe_4Report.RData"), verbose = FALSE)
+comp_results_FAPAR_Eur <- comp_results
+load(file = paste0(path2save_FAPAR_WAfr, "/ResampleResults_fapar_wafrica_4Report.RData"), verbose = FALSE)
+comp_results_FAPAR_WAfr <- comp_results
+my_extent_wafr <- my_extent
 
 
 table_num <- captioner::captioner(prefix = "Table")
@@ -100,37 +113,57 @@ work_extent_eur <- paste(c("xmin = ", "xmax = ", "ymin = ", "ymax = "), work_ext
 work_extent_ama <- round(as.vector(my_extent_ama), 2)
 work_extent_ama <- paste(c("xmin = ", "xmax = ", "ymin = ", "ymax = "), work_extent_ama)
 
+work_extent_wafr <- round(as.vector(my_extent_wafr), 2)
+work_extent_wafr <- paste(c("xmin = ", "xmax = ", "ymin = ", "ymax = "), work_extent_wafr)
+
 Sys.setlocale("LC_TIME", "C")
-img_date <- format(as.Date(img_date), "%B %d, %Y")
+img_date_ndvi <- format(as.Date(img_date_ndvi), "%B %d, %Y")
+img_date_lai <- format(as.Date(img_date_lai), "%B %d, %Y")
+img_date_fapar <- format(as.Date(img_date_fapar), "%B %d, %Y")
 
 fig_ndvi_300m_eur <- fig_num(name = "f_ndvi_300_eur", caption = "NDVI map at 333m resolution for the European-North African working extent")
 orig_ndvi_300map <- paste0(path2save_NDVI_Eur, "/ndvi_300m_orig_Eur.jpg")
 
 fig_lai_300m_ama <- fig_num(name = "f_lai_300_ama", caption = "LAI map at 333m resolution for the Amazonian working extent")
 orig_lai_300map <- paste0(path2save_LAI_Ama, "/lai_300m_orig_Amaz.jpg")
+
+fig_fapar_300m_wafr <- fig_num(name = "f_fapar_300_wafr", caption = "FAPAR map at 333m resolution for the Western Africa working extent")
+orig_fapar_300map <- paste0(path2save_FAPAR_WAfr, "/fapar_300m_orig_WAfr.jpg")
+
+cutoff_method_df <- read.csv(paste0("/Users/xavi_rp/Documents/D6_LPD/ResampleTool_notebook", "/Table_cutoff_and_resampleMethod.csv"),
+                             stringsAsFactors = FALSE,
+                             header = TRUE)
+
+cutoff_df <- table_num(name = "cutoff_table", caption = "Cutoff of valid values for each product/layer")
+
+
 ```
 
-The analysis was done using different subsets of several 10-daily CGLS vegetation-related global products (i.e. Normalized Difference Vegetation Index-NDVI and Leaf area index-LAI). The selected images (i.e. 1km and 333m resolution) corresponded to the `r img_date`, 10-day period, and the assessments were made in two different areas. On the one hand, NDVI resampled product was tested for Europe and North Africa (coordinates in Decimal Degrees `r work_extent_eur`) in order to have a wide representation of different landscapes. On the other hand, the LAI product was tested both using the same European-North African window and also on a subset from a tropical area (Amazonia; coordinates `r work_extent_ama`) in order to have as well a good representation of evergreen broadleaf forests (EBF). While `r fig_num("f_ndvi_300_eur", display = "cite")` shows the 333m NDVI working map used for the resampling in Europe-North Africa, `r fig_num("f_lai_300_ama", display = "cite")` shows the 333m LAI working map used for the Amazonian area.
+The analysis was done using different subsets of several 10-daily CGLS vegetation-related global products (i.e. Normalized Difference Vegetation Index-NDVI, Leaf area index-LAI and Fraction of Absorbed Photosynthetically Active Radiation-FAPAR). The selected images (i.e. 1km and 333m resolution) corresponded respectively to the `r img_date_ndvi`, `r img_date_lai` and `r img_date_fapar`, 10-day period, and the assessments were made in three different areas. Firstly, the three resampled products were tested for Europe and North Africa (coordinates in Decimal Degrees `r work_extent_eur`) in order to have a wide representation of different landscapes. Secondly, the LAI and the FAPAR products were tested at the same European-North African window but also on a subset from a tropical area in Amazonia (`r work_extent_ama`) in order to have as well a good representation of evergreen broadleaf forests (EBF). Finally, the FAPAR product was tested also in a western African region (`r work_extent_wafr`). The three following images show examples of the 333m working maps used for the resample tests for the different study areas (`r fig_num("f_ndvi_300_eur", display = "cite")`, `r fig_num("f_lai_300_ama", display = "cite")` and `r fig_num("f_fapar_300_wafr", display = "cite")`).
 
 ![`r fig_ndvi_300m_eur`](`r orig_ndvi_300map`)
 
 
 ![`r fig_lai_300m_ama`](`r orig_lai_300map`)
+
+
+![`r fig_fapar_300m_wafr`](`r orig_fapar_300map`)
+
 &nbsp;
 
 
-The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, digital values in the netCDF (DN) > 250 are flagged and need to be converted into NA. When the netCDF files are read in as a *raster* object, the digital values are scaled into real NDVI values automatically. Therefore, after reading the files,  all pixels with NDVI values bigger than 0.92 (= DN 250 x scale + offset) were set to NA. In the same way, LAI values bigger than 7 and smaller than 0, if any, were converted to NAs.
+The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, for example, digital values in the netCDF (DN) > 250 are flagged and need to be converted into NA. When the netCDF files are read in as a *raster* object, the digital values are scaled into real NDVI values automatically. Therefore, after reading the files, all pixels with NDVI values bigger than 0.92 (= DN 250 x scale + offset) were set to NA. In the same way, LAI values larger than 7 and FAPAR values larger than 0.94, and for both smaller than 0, if any, were converted to NAs.
 
-The information regarding flagged values, as well as other supporting information, can be seen in the netCDF file metadata. In addition, more details on the CGLS global products can be found in their Product User Manual at https://land.copernicus.eu/global/products/. 
+The flagged values of the CGLS global products can be seen in `r table_num("cutoff_table", display = "cite")`. In addition, other supporting information of each product can be found both in the netCDF file metadata and in their Product User Manual at https://land.copernicus.eu/global/products/. 
+
+`r kable(cutoff_method_df[, c(1:3, 5:8)], caption = cutoff_df)`
+&nbsp;
+
 
 
 
 ## Resample method
 ```{r echo = FALSE}
-cutoff_method_df <- read.csv(paste0("/Users/xavi_rp/Documents/D6_LPD/ResampleTool_notebook", "/Table_cutoff_and_resampleMethod.csv"),
-                             stringsAsFactors = FALSE,
-                             header = TRUE)
-
 method_df <- table_num(name = "method_table", caption = "Best suited method recommended for each product/layer.")
 
 ```
@@ -143,7 +176,7 @@ The area-based aggregation method used in this assessment groups rectangular mat
 On the one hand, for the R-based method (R Core Team, 2019), the function *aggregate()* of the package *raster* (Hijmans, 2019) was used. *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For both the NDVI and the LAI products the most suitable method is the average. `r table_num("method_table", display = "cite")` shows a recommendation of the best suited method for each product/layer. In addition, as it is also recommended in the tool, it was included the condition that at least 5 out of the 9 pixels had to have valid values (i.e. not NA) to return a valid value for the resampled pixel.
 
 
-`r pander(cutoff_method_df[, c(1:3, 9)], caption = method_df)`
+`r kable(cutoff_method_df[, c(1:3, 9)], caption = method_df)`
 **Note:** * QFLAG, LENGTH_BEFORE/AFTER and NOBS cannot be resampled due to different implementations for 1km-v2 and 300m-v1 products. For example, LAI-NOBS ranges are 0-120 for 1km-v2 and 0-40 for 300m-v1, or LAI/FAPAR/FCOVER-LENGTH_BEFORE go up to 60 days and up to 210 days, respectively for both products.
 &nbsp;
 
@@ -185,7 +218,7 @@ In this document we present five different assessments depending on the CGLS pro
 
 `r table_num("comp_results_table", display = "cite")` summarizes the three metrics calculated in each assessment, so that an overview of all the cases is provided. In the following subsections each case will be developed separately and in more detail. 
 
-`r pander(comp_results, caption = comp_results_df)`
+`r kable(comp_results, caption = comp_results_df)`
 &nbsp;
 
 
