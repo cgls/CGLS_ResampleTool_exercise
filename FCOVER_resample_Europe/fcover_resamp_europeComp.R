@@ -24,28 +24,27 @@ library(sf)
 
 if(Sys.info()[4] == "D01RI1700371"){
   path2data <- "E:/rotllxa/NDVI_resample/NDVI_data"
-  path2save <- "E:/rotllxa/NDVI_resample/"
+  path2save <- "E:/rotllxa/NDVI_resample/NDVI_resample_Europe"
 }else if(Sys.info()[4] == "h05-wad.ies.jrc.it"){
   path2data <- ""
   path2save <- ""
 }else if(Sys.info()[4] == "MacBook-MacBook-Pro-de-Xavier.local"){
   path2data <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_data"
-  path2save <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/FAPAR_resample_amazonia"
+  path2save <- "/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/FCOVER_resample_Europe"
 }else{
   stop("Define your machine before to run LPD")
 }
 
 setwd(path2save)
 
-nc_file300m <- paste0(path2data, "/fapar300_v1_333m/fapar300_v1_333m_c_gls_FAPAR300_201808100000_GLOBE_PROBAV_V1.0.1.nc")
-fapar_1km_orig <- paste0(path2data, "/fapar_v2_1km/fapar_v2_1km_c_gls_FAPAR-RT6_201808100000_GLOBE_PROBAV_V2.0.1.nc")
+nc_file300m <- paste0(path2data, "/fcover300_v1_333m/fcover300_v1_333m_c_gls_FCOVER300_201805100000_GLOBE_PROBAV_V1.0.1.nc")
+fcover_1km_orig <- paste0(path2data, "/fcover_v2_1km/fcover_v2_1km_c_gls_FCOVER-RT6_201805100000_GLOBE_PROBAV_V2.0.1.nc")
 
 
 
-## Amazonia working extent ####
-
-my_extent <- extent(-70, -63, -5.5, -0.2)
-
+## Reading in data QGIS resampled average for the extent ####
+kk <- raster(paste0("/Users/xavi_rp/Documents/D6_LPD/NDVI_resample/NDVI_resample_Europe", "/r300m_resampled1km_Aggr.tif"))
+my_extent <- extent(kk)
 
 # Checking correspondence with 1km PROBA-V products
 # The following vectors contain Long and Lat coordinates, respectively, of the 1km grid (cell boundaries):
@@ -71,101 +70,101 @@ as.vector(my_extent)
 
 ## Reading in data 1km global ####
 
-#nc <- nc_open(fapar_1km_orig)
+#nc <- nc_open(fcover_1km_orig)
 #str(nc)
-#nc$var$FAPAR$missval   # 255
-#nc$var$FAPAR$scaleFact  # 0.004
-#nc$var$FAPAR$addOffset  # 0  
+#nc$var$FCOVER$missval   # 255
+#nc$var$FCOVER$scaleFact  # 0.004
+#nc$var$FCOVER$addOffset  # 0  
 #
 ##The physical or real value is computed as digital number * scale + offset.
 ##But this applies only for valid pixels.
-#nc$var$FAPAR$missval * nc$var$FAPAR$scaleFact + nc$var$FAPAR$addOffset    # 1.02
+#nc$var$FCOVER$missval * nc$var$FCOVER$scaleFact + nc$var$FCOVER$addOffset    # 1.02
 
 #
 
 
-fapar_1km_orig <- raster(fapar_1km_orig)
-img_date <- fapar_1km_orig@z[[1]]
-fapar_1km_orig_extnt <- extent(fapar_1km_orig)
+fcover_1km_orig <- raster(fcover_1km_orig)
+img_date <- fcover_1km_orig@z[[1]]
+fcover_1km_orig_extnt <- extent(fcover_1km_orig)
 
-if(all(round(fapar_1km_orig_extnt[1], 7) %in% round(x_ext, 7) &
-       round(fapar_1km_orig_extnt[2], 7) %in% round(x_ext, 7) &
-       round(fapar_1km_orig_extnt[3], 7) %in% round(y_ext, 7) &
-       round(fapar_1km_orig_extnt[4], 7) %in% round(y_ext, 7))){
-  print("fapar_1km_orig extent matches PROBA-V products")
+if(all(round(fcover_1km_orig_extnt[1], 7) %in% round(x_ext, 7) &
+       round(fcover_1km_orig_extnt[2], 7) %in% round(x_ext, 7) &
+       round(fcover_1km_orig_extnt[3], 7) %in% round(y_ext, 7) &
+       round(fcover_1km_orig_extnt[4], 7) %in% round(y_ext, 7))){
+  print("fcover_1km_orig extent matches PROBA-V products")
 }else{
-  stop("fapar_1km_orig extent does NOT match PROBA-V products!!!")
+  stop("fcover_1km_orig extent does NOT match PROBA-V products!!!")
 }   
 
-#cropping to Amazonia
-fapar_1km_orig_Ama <- crop(fapar_1km_orig, my_extent)
+#cropping to Europe
+fcover_1km_orig_Eur <- crop(fcover_1km_orig, my_extent)
 as.vector(extent(my_extent))
-as.vector(extent(fapar_1km_orig_Ama))
-summary(getValues(fapar_1km_orig_Ama))
+as.vector(extent(fcover_1km_orig_Eur))
+#summary(getValues(fcover_1km_orig_Eur))
 
-jpeg(paste0(path2save, "/fapar_1km_orig_Ama.jpg"))
-plot(fapar_1km_orig_Ama)
+jpeg(paste0(path2save, "/fcover_1km_orig_Eur.jpg"))
+plot(fcover_1km_orig_Eur)
 dev.off()
 
-fapar1km_rstr <- fapar_1km_orig_Ama
+fcover1km_rstr <- fcover_1km_orig_Eur
 
 
 ## Reading in data 300m ####
-fapar_300m_orig <- raster(nc_file300m)
-fapar_300m_orig_extnt <- extent(fapar_300m_orig)
+fcover_300m_orig <- raster(nc_file300m)
+fcover_300m_orig_extnt <- extent(fcover_300m_orig)
 
-#cropping to Amazonia
-fapar_300m_orig_Ama <- crop(fapar_300m_orig, my_extent)
+#cropping to Europe
+fcover_300m_orig_Eur <- crop(fcover_300m_orig, my_extent)
 as.vector(extent(my_extent))
-as.vector(extent(fapar_300m_orig_Ama))
-summary(getValues(fapar_300m_orig_Ama))
+as.vector(extent(fcover_300m_orig_Eur))
+#summary(getValues(fcover_300m_orig_Eur))
 
-jpeg(paste0(path2save, "/fapar_300m_orig_Ama.jpg"))
-plot(fapar_300m_orig_Ama)
+jpeg(paste0(path2save, "/fcover_300m_orig_Eur.jpg"))
+plot(fcover_300m_orig_Eur)
 dev.off()
 
 
-if(all(round(extent(fapar_300m_orig_Ama)[1], 7) %in% round(x_ext, 7) &
-       round(extent(fapar_300m_orig_Ama)[2], 7) %in% round(x_ext, 7) &
-       round(extent(fapar_300m_orig_Ama)[3], 7) %in% round(y_ext, 7) &
-       round(extent(fapar_300m_orig_Ama)[4], 7) %in% round(y_ext, 7))){
-  print("fapar_300m_orig_extnt extent matches PROBA-V products")
+if(all(round(extent(fcover_300m_orig_Eur)[1], 7) %in% round(x_ext, 7) &
+       round(extent(fcover_300m_orig_Eur)[2], 7) %in% round(x_ext, 7) &
+       round(extent(fcover_300m_orig_Eur)[3], 7) %in% round(y_ext, 7) &
+       round(extent(fcover_300m_orig_Eur)[4], 7) %in% round(y_ext, 7))){
+  print("fcover_300m_orig_extnt extent matches PROBA-V products")
 }else{
-  stop("fapar_300m_orig_extnt extent does NOT match PROBA-V products!!!")
+  stop("fcover_300m_orig_extnt extent does NOT match PROBA-V products!!!")
 }   
 
 
 ## Dealing with "flagged values" ####
 # "flagged values" are those corresponding to water bodies, NAs, etc. 
-# They have FAPAR values > cuttoff_NA_err (0.94), or assigned values in the NetCDF between 251 and 255.
-# They have FAPAR values < cuttoff_NA_err_min (0.00), or assigned values in the NetCDF between 251 and 255.
+# They have FCOVER values > cuttoff_NA_err (1.00), or assigned values in the NetCDF between 251 and 255.
+# They have FCOVER values < cuttoff_NA_err_min (0.00), or assigned values in the NetCDF between 251 and 255.
 # We might want to "remove" them from the average calculations as they are highly influencing such averages,
 # driving to wrong predictions.
 
 # Converting flagged values to NAs
-fapar300m_rstr <- fapar_300m_orig_Ama
+fcover300m_rstr <- fcover_300m_orig_Eur
 
-cuttoff_NA_err <- 0.9400000001  # everything >= cuttoff_NA_err, must be removed for the calculations
+cuttoff_NA_err <- 1.000000001  # everything >= cuttoff_NA_err, must be removed for the calculations
 cuttoff_NA_err_min <- -0.00000001  # everything <= cuttoff_NA_err_min, must be removed for the calculations
 
-jpeg(paste0(path2save, "/fapar300m_NA.jpg"))
-plot(fapar1km_rstr, breaks = c(minValue(fapar1km_rstr), cuttoff_NA_err), col = c("blue"))
+jpeg(paste0(path2save, "/fcover300m_NA.jpg"))
+plot(fcover1km_rstr, breaks = c(minValue(fcover1km_rstr), cuttoff_NA_err), col = c("blue"))
 dev.off()
 
 
 # 300m product
-sum(is.na(as.data.frame(fapar300m_rstr)))
-sum(as.data.frame(fapar300m_rstr) > cuttoff_NA_err, na.rm = TRUE)
-sum(as.data.frame(fapar300m_rstr) < cuttoff_NA_err_min, na.rm = TRUE)
+sum(is.na(as.data.frame(fcover300m_rstr)))
+sum(as.data.frame(fcover300m_rstr) > cuttoff_NA_err, na.rm = TRUE)
+sum(as.data.frame(fcover300m_rstr) < cuttoff_NA_err_min, na.rm = TRUE)
 
-fapar300m_rstr[fapar300m_rstr > cuttoff_NA_err] <- NA  # setting to NA
-fapar300m_rstr[fapar300m_rstr < cuttoff_NA_err_min] <- NA  # setting to NA
-sum(is.na(as.data.frame(fapar300m_rstr)))
+fcover300m_rstr[fcover300m_rstr > cuttoff_NA_err] <- NA  # setting to NA
+fcover300m_rstr[fcover300m_rstr < cuttoff_NA_err_min] <- NA  # setting to NA
+sum(is.na(as.data.frame(fcover300m_rstr)))
 
 # 1km product
-fapar1km_rstr[fapar1km_rstr > cuttoff_NA_err] <- NA   # setting to NA
-fapar1km_rstr[fapar1km_rstr < cuttoff_NA_err_min] <- NA   # setting to NA
-sum(is.na(as.data.frame(fapar1km_rstr)))
+fcover1km_rstr[fcover1km_rstr > cuttoff_NA_err] <- NA   # setting to NA
+fcover1km_rstr[fcover1km_rstr < cuttoff_NA_err_min] <- NA   # setting to NA
+sum(is.na(as.data.frame(fcover1km_rstr)))
 
 
 
@@ -185,7 +184,7 @@ mean_w.cond <- function(x, ...){ # mean including condition 'minimum 5 valid pix
 
 aggr_method <- "mean_w.cond"
 t0 <- Sys.time()
-r300m_resampled1km_Aggr <- aggregate(fapar300m_rstr,
+r300m_resampled1km_Aggr <- aggregate(fcover300m_rstr,
                                      fact = 3, # from 333m to 1km  
                                      fun = aggr_method, 
                                      na.rm = TRUE, 
@@ -201,20 +200,20 @@ dev.off()
 
 
 # plotting original 1km and 300m
-jpeg(paste0(path2save, "/fapar1km_300m_Ama.jpg"),
+jpeg(paste0(path2save, "/fcover1km_300m_Eur.jpg"),
      width = 22, height = 14, units = "cm", res = 300)
 par(mfrow = c(1, 2), mar = c(4, 4, 4, 5))
-plot(fapar1km_rstr, main = "FAPAR 1km")
-plot(fapar300m_rstr, main = "FAPAR 333m") 
+plot(fcover1km_rstr, main = "FCOVER 1km")
+plot(fcover300m_rstr, main = "FCOVER 333m") 
 dev.off()
 
 
 # plotting original-1km + resampled-1km
-jpeg(paste0(path2save, "/fapar1km_1kmResampled_RAggr.jpg"),
+jpeg(paste0(path2save, "/fcover1km_1kmResampled_RAggr.jpg"),
      width = 22, height = 14, units = "cm", res = 300)
 par(mfrow = c(1, 2), mar = c(4, 4, 4, 5))
-plot(fapar1km_rstr, main = "FAPAR 1km (original)")
-plot(r300m_resampled1km_Aggr, main = "FAPAR 1km (resampled)") 
+plot(fcover1km_rstr, main = "FCOVER 1km (original)")
+plot(r300m_resampled1km_Aggr, main = "FCOVER 1km (resampled)") 
 dev.off()
 
 
@@ -222,7 +221,7 @@ dev.off()
 
 ## Resampling using resample() ####
 
-#r300m_resampled1km_Bilinear <- resample(fapar300m_rstr, fapar1km_rstr, 
+#r300m_resampled1km_Bilinear <- resample(fcover300m_rstr, fcover1km_rstr, 
 #                                        method = "bilinear", 
 #                                        filename = paste0(path2save, "/r300m_resampled1km_Bilinear.tif"),
 #                                        overwrite = TRUE)
@@ -236,9 +235,9 @@ names(comp_results) <- c("objects",
                          "Pearson's r", "Root Mean Square Error", "Mean Absolute Error")
 comp_results[1, 1] <- "orig-1km__resampl-1km-R-Aggreg"
 
-rsmpl_df <- data.frame(getValues(fapar1km_rstr), getValues(r300m_resampled1km_Aggr))
+rsmpl_df <- data.frame(getValues(fcover1km_rstr), getValues(r300m_resampled1km_Aggr))
 
-sum(complete.cases(rsmpl_df))
+#sum(complete.cases(rsmpl_df))
 rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
 
 # Pearson's correlation coefficient
@@ -253,11 +252,11 @@ num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
 rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
 
 jpeg(paste0(path2save, "/resample_correlation_RAggr.jpg"))
-xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.fapar1km_rstr., 
+xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.fcover1km_rstr., 
        type = c("p", "r"),
        col.line = "red",
-       xlab = "1km original FAPAR product",
-       ylab = "1km resampled FAPAR image (R)",
+       xlab = "1km original FCOVER product",
+       ylab = "1km resampled FCOVER image (R)",
        main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
        sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
 )
@@ -266,16 +265,16 @@ dev.off()
 
 # Calculating differences (errors)
 head(rsmpl_df)
-rsmpl_df$diff <- abs(rsmpl_df$getValues.fapar1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr.)
-rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.fapar1km_rstr., 1) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 1))
-rsmpl_df$diff3 <- abs(round(rsmpl_df$getValues.fapar1km_rstr., 3) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 3))
+rsmpl_df$diff <- abs(rsmpl_df$getValues.fcover1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr.)
+rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.fcover1km_rstr., 1) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 1))
+rsmpl_df$diff3 <- abs(round(rsmpl_df$getValues.fcover1km_rstr., 3) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 3))
 
 summary(rsmpl_df$diff)
 summary(rsmpl_df$diff1)
 quantile(rsmpl_df$diff1, seq(0, 1, 0.1))
 summary(rsmpl_df$diff3) # not substantial differences with 'rsmpl_df$diff'
 
-1/250 # 0.004 is the amount of physical or real value (for FAPAR, 0.00:0.94) 
+1/250 # 0.004 is the amount of physical or real value (for FCOVER, 0.00:1.00) 
 # for each digital number (0:250), so at least 3 decimals should be included
 #
 
@@ -290,7 +289,7 @@ comp_results[1, 4] <- mae
 
 
 # Bivariate Linear Regression
-#lm_obj <- lm(rsmpl_df$getValues.fapar1km_rstr. ~ rsmpl_df$getValues.r300m_resampled1km_Aggr.)
+#lm_obj <- lm(rsmpl_df$getValues.fcover1km_rstr. ~ rsmpl_df$getValues.r300m_resampled1km_Aggr.)
 #summary(lm_obj)
 #lm_obj_summary <- summary(lm_obj)
 #round(lm_obj_summary$r.squared, 10) == round(rsmpl_df_pearson^2, 10)
@@ -298,6 +297,6 @@ comp_results[1, 4] <- mae
 
 # Saving stuff for the report
 stuff2save <- c("comp_results", "my_extent", "img_date")
-save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fapar_amazonia_4Report.RData"))
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fcover_europe_4Report.RData"))
 
 
