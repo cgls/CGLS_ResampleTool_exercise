@@ -224,32 +224,6 @@ dev.off()
 
 
 
-## Resampling using aggregate() / percentile ####
-quant_w.cond <- function(x, perc = 0.5, ...){ # mean including condition 'minimum 5 valid pixels'
-  n_valid <- sum(!is.na(x)) # number of cells with valid value
-  if(n_valid > 4){
-    dts <- list(...)
-    if(is.null(dts$na_rm)) dts$na_rm <- TRUE
-    x_quant <- quantile(x, perc, na.rm = dts$na_rm)
-    return(x_quant)
-  }else{
-    x_quant <- NA
-    return(x_quant)
-  }
-}
-
-aggr_method <- "quant_w.cond"
-t0 <- Sys.time()
-r300m_resampled1km_Aggr_quant <- aggregate(lai300m_rstr,
-                                           fact = 3, # from 333m to 1km  
-                                           fun = aggr_method, 
-                                           na.rm = TRUE, 
-                                           #filename = 'r300m_resampled1km_Aggr.tif',
-                                           overwrite = TRUE
-                                           )
-Sys.time() - t0
-r300m_resampled1km_Aggr_quant
-r300m_resampled1km_Aggr <- r300m_resampled1km_Aggr_quant
 
 
 ## Resampling using resample() ####
@@ -320,6 +294,125 @@ comp_results[1, 4] <- mae
 # Saving stuff for the report
 stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
+
+
+
+## Resampling using aggregate() / 95th percentile ####
+quant_w.cond <- function(x, perc = 0.95, ...){ # mean including condition 'minimum 5 valid pixels'
+  n_valid <- sum(!is.na(x)) # number of cells with valid value
+  if(n_valid > 4){
+    dts <- list(...)
+    if(is.null(dts$na_rm)) dts$na_rm <- TRUE
+    x_quant <- quantile(x, perc, na.rm = dts$na_rm)
+    return(x_quant)
+  }else{
+    x_quant <- NA
+    return(x_quant)
+  }
+}
+
+aggr_method <- "quant_w.cond"
+t0 <- Sys.time()
+r300m_resampled1km_Aggr_quant <- aggregate(lai300m_rstr,
+                                           fact = 3, # from 333m to 1km  
+                                           fun = aggr_method, 
+                                           na.rm = TRUE, 
+                                           #filename = 'r300m_resampled1km_Aggr.tif',
+                                           overwrite = TRUE
+)
+Sys.time() - t0
+r300m_resampled1km_Aggr_quant
+#r300m_resampled1km_Aggr <- r300m_resampled1km_Aggr_quant
+
+
+rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(r300m_resampled1km_Aggr_quant))
+rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
+
+# Pearson's correlation coefficient
+rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
+rsmpl_df_pearson
+rsmpl_df_pearson^2  # if we fit a linear regression (see below), this is R^2 (R squared)
+comp_results[2, 2] <- rsmpl_df_pearson
+
+# Calculating differences (errors)
+head(rsmpl_df)
+rsmpl_df$diff <- abs(rsmpl_df$getValues.lai1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr_quant.)
+
+# Root Mean Square Error (RMSE; the lower, the better)
+# In GIS, the RMSD is one measure used to assess the accuracy of spatial analysis and remote sensing.
+rmse <- sqrt(mean((rsmpl_df$diff)^2)) 
+comp_results[2, 3] <- rmse
+
+# Mean Absolute Error (MAE; the lower, the better)
+mae <- mean(rsmpl_df$diff)
+comp_results[2, 4] <- mae
+
+# Saving stuff for the report
+comp_results[2, 1] <- "orig-1km__resampl-1km-R-Aggreg-Percentile95"
+
+stuff2save <- c("comp_results", "my_extent", "img_date")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
+
+
+
+## Resampling using aggregate() / 50th percentile (median) ####
+quant_w.cond <- function(x, perc = 0.50, ...){ # mean including condition 'minimum 5 valid pixels'
+  n_valid <- sum(!is.na(x)) # number of cells with valid value
+  if(n_valid > 4){
+    dts <- list(...)
+    if(is.null(dts$na_rm)) dts$na_rm <- TRUE
+    x_quant <- quantile(x, perc, na.rm = dts$na_rm)
+    return(x_quant)
+  }else{
+    x_quant <- NA
+    return(x_quant)
+  }
+}
+
+aggr_method <- "quant_w.cond"
+t0 <- Sys.time()
+r300m_resampled1km_Aggr_quant <- aggregate(lai300m_rstr,
+                                           fact = 3, # from 333m to 1km  
+                                           fun = aggr_method, 
+                                           na.rm = TRUE, 
+                                           #filename = 'r300m_resampled1km_Aggr.tif',
+                                           overwrite = TRUE
+)
+Sys.time() - t0
+r300m_resampled1km_Aggr_quant
+#r300m_resampled1km_Aggr <- r300m_resampled1km_Aggr_quant
+
+
+rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(r300m_resampled1km_Aggr_quant))
+rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
+
+# Pearson's correlation coefficient
+rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
+rsmpl_df_pearson
+rsmpl_df_pearson^2  # if we fit a linear regression (see below), this is R^2 (R squared)
+comp_results[3, 2] <- rsmpl_df_pearson
+
+# Calculating differences (errors)
+head(rsmpl_df)
+rsmpl_df$diff <- abs(rsmpl_df$getValues.lai1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr_quant.)
+
+# Root Mean Square Error (RMSE; the lower, the better)
+# In GIS, the RMSD is one measure used to assess the accuracy of spatial analysis and remote sensing.
+rmse <- sqrt(mean((rsmpl_df$diff)^2)) 
+comp_results[3, 3] <- rmse
+
+# Mean Absolute Error (MAE; the lower, the better)
+mae <- mean(rsmpl_df$diff)
+comp_results[3, 4] <- mae
+
+# Saving stuff for the report
+comp_results[3, 1] <- "orig-1km__resampl-1km-R-Aggreg-Median"
+
+stuff2save <- c("comp_results", "my_extent", "img_date")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
+
+
+
 
 
 
