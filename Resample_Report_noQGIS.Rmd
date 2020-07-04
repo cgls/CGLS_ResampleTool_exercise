@@ -213,7 +213,7 @@ In order to assess the performance of the resampling methods, besides mapping th
 
 * Mean absolute error (MAE) 
 
-In addition, a map representing the spatial distribution of the bigger (> 95^th^ percentile) absolute errors (|original1km – resampled1km|) was also generated to observe possible spatial patterns of the errors for the NDVI resampled product.  
+In addition, some maps representing the spatial distribution of the larger absolute errors (|original1km – resampled1km|) were also generated for some products/areas to observe possible spatial patterns of those errors.  
 
 The R code used to perform the assessment reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample. 
 &nbsp;
@@ -366,7 +366,7 @@ orig_Raggr_FAPAR_eur_ErrorMap <- paste0(path2save_FAPAR_Eur, "/fapar1km_1kmResam
 
 &nbsp;
 
-Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_results[3, 3]` and MAE = `r comp_results[4, 4]`) and the scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")`) showed general good results of the resample, in line with NDVI and a bit better then LAI for the same region. However, there were a subgroup of cells of the original 1km product with values lower than 0.14, which gave much larger resampled values, and needed to be carefully checked. They can be seen in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_ErrorMap", display = "cite")`. **Something to say about them??? Any explanation???**
+Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_results[3, 3]` and MAE = `r comp_results[4, 4]`) and the scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")`) showed general good results of the resample, in line with NDVI and a bit better then LAI for the same region. However, there were a subgroup of cells of the original 1km product with values lower than 0.14, which gave much larger resampled values, and needed to be carefully checked. They can be seen in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")` and mapped in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_ErrorMap", display = "cite")`. **Something to say about them??? Any explanation???**
 
 ![`r fig_1km_1km_Raggr_FAPAR_eur_scat`](`r orig_Raggr_FAPAR_eur_scat`)
 
@@ -403,16 +403,119 @@ The following scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_ama_scat", display 
 
 
 ## FAPAR resampled vs the original 1km product: Western Africa
+```{r echo = FALSE}
+fig_1km_1km_Raggr_FAPAR_wafr <- fig_num(name = "f_1km_1km_Raggr_FAPAR_wafr", caption = "Original FAPAR map at 1km resolution and the resampled one using the R-based tool for the Western African study area")
+orig_Raggr_FAPAR_wafr <- paste0(path2save_FAPAR_WAfr, "/fapar1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_FAPAR_wafr_scat <- fig_num(name = "f_1km_1km_Raggr_FAPAR_wafr_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original FAPAR product against the values of the same pixels of the resampled map using the R tool (blue points) for Western Africa. Also the regression (red) line")
+orig_Raggr_FAPAR_wafr_scat <- paste0(path2save_FAPAR_WAfr, "/resample_correlation_RAggr.jpg")
+
+```
+
+In `r fig_num("f_1km_1km_Raggr_FAPAR_wafr", display = "cite")` it can be seen, similarly than in the Amazonian study area, thet the resampled to 1km FAPAR map shows much more cells with NoData than the original 1km product in the EBF areas. Again, this is likely due to the gap filling method used in the version 2 of the Global Land products used in the exercises presented in this document. 
+
+![`r fig_1km_1km_Raggr_FAPAR_wafr`](`r orig_Raggr_FAPAR_wafr`)
+
+&nbsp;
+
+Unlike for the European/North African area, however, the scatterplot of FAPAR in this region (`r fig_num("f_1km_1km_Raggr_FAPAR_wafr_scat", display = "cite")`) does not show a subgroup of large errors for the lowest values of the original 1km product. In addition,  the statistics showed good correlation (Pearson's *r* = `r comp_results[6, 2]`), and also good levels of averaged errors (RMSE = `r comp_results[6, 3]` and MAE = `r comp_results[6, 4]`). Therefore, the resample tool gave good results for the FAPAR products in this area.
+
+![`r fig_1km_1km_Raggr_FAPAR_wafr_scat`](`r orig_Raggr_FAPAR_wafr_scat`)
+
+&nbsp;
 
 
+
+## FCOVER resampled vs the original 1km product: Europe/North Africa
+```{r echo = FALSE}
+fig_1km_1km_Raggr_FCOVER_eur <- fig_num(name = "f_1km_1km_Raggr_FCOVER_eur", caption = "Original FCOVER map at 1km resolution and the resampled one using the R-based tool for the Europe/North African study area")
+orig_Raggr_FCOVER_eur <- paste0(path2save_FCOVER_Eur, "/fcover1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_FCOVER_eur_scat <- fig_num(name = "f_1km_1km_Raggr_FCOVER_eur_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original FCOVER product against the values of the same pixels of the resampled map using the R tool (blue points) for Europe/North Africa. Also the regression (red) line")
+orig_Raggr_FCOVER_eur_scat <- paste0(path2save_FCOVER_Eur, "/resample_correlation_RAggr.jpg")
+
+```
+
+FCOVER is another CGLS product analysed in this document. `r fig_num("f_1km_1km_Raggr_FCOVER_eur", display = "cite")` shows, in general, a similar pattern between the original 1km product and the resampled one, although some NoData areas can be spotted both in the Alps and in Norway. 
+
+![`r fig_1km_1km_Raggr_FCOVER_eur`](`r orig_Raggr_FCOVER_eur`)
+
+&nbsp;
+
+The scatterplot (`r fig_num("f_1km_1km_Raggr_FCOVER_eur_scat", display = "cite")`) and Pearson's *r* (`r comp_results[7, 2]`) of FCOVER in this region showed slightly worse results than the resampled products of NDVI and FAPAR, although still good. The same was observed for RMSE and MAE (`r comp_results[7, 3]` and `r comp_results[7, 4]`, respectively), although valid range of FCOVER goes slightly upper (0.00:1.00). 
+
+![`r fig_1km_1km_Raggr_FCOVER_eur_scat`](`r orig_Raggr_FCOVER_eur_scat`)
+
+&nbsp;
+
+
+
+## FCOVER resampled vs the original 1km product: Amazonia
+```{r echo = FALSE}
+fig_1km_1km_Raggr_FCOVER_ama <- fig_num(name = "f_1km_1km_Raggr_FCOVER_ama", caption = "Original FCOVER map at 1km resolution and the resampled one using the R-based tool for the Amazonian study area")
+orig_Raggr_FCOVER_ama <- paste0(path2save_FCOVER_Ama, "/fcover1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_FCOVER_ama_scat <- fig_num(name = "f_1km_1km_Raggr_FCOVER_ama_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original FCOVER product against the values of the same pixels of the resampled map using the R tool (blue points) for Amazonia. Also the regression (red) line")
+orig_Raggr_FCOVER_ama_scat <- paste0(path2save_FCOVER_Ama, "/resample_correlation_RAggr.jpg")
+
+```
+
+`r fig_num("f_1km_1km_Raggr_FCOVER_ama", display = "cite")` shows that the main differences between the original 1km and the resampled to 1km products in Amazonia were mainly close to the rivers. FCOVER gave very similar results than LAI both in terms of correlation (see `r fig_num("f_1km_1km_Raggr_FCOVER_ama_scat", display = "cite")`; Pearson's *r* = `r comp_results[8, 2]`) and averaged errors (RMSE = `r comp_results[8, 3]`; MAE = `r comp_results[8, 4]`).
+
+![`r fig_1km_1km_Raggr_FCOVER_ama`](`r orig_Raggr_FCOVER_ama`)
+
+![`r fig_1km_1km_Raggr_FCOVER_ama_scat`](`r orig_Raggr_FCOVER_ama_scat`)
+
+&nbsp;
+
+
+
+## DMP resampled vs the original 1km product: Europe/North Africa
+```{r echo = FALSE}
+fig_1km_1km_Raggr_DMP_eur <- fig_num(name = "f_1km_1km_Raggr_DMP_eur", caption = "Original DMP map at 1km resolution and the resampled one using the R-based tool for the Europe/North African study area")
+orig_Raggr_DMP_eur <- paste0(path2save_DMP_Eur, "/dmp1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_DMP_eur_scat <- fig_num(name = "f_1km_1km_Raggr_DMP_eur_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original DMP product against the values of the same pixels of the resampled map using the R tool (blue points) for Europe/North Africa. Also the regression (red) line")
+orig_Raggr_DMP_eur_scat <- paste0(path2save_DMP_Eur, "/resample_correlation_RAggr.jpg")
+
+```
+
+Finally, the resampled DMP products were also tested. `r fig_num("f_1km_1km_Raggr_DMP_eur", display = "cite")` already shows very similar patterns in both 1km products (original vs resampled). This similarity was confirmed with the scatterplot (`r fig_num("f_1km_1km_Raggr_DMP_eur_scat", display = "cite")`) and the statistics. Pearson's correlation was `r comp_results[9, 2]`, RMSE, `r comp_results[9, 3]`, and MAE, `r comp_results[9, 4]`
+
+![`r fig_1km_1km_Raggr_DMP_eur`](`r orig_Raggr_DMP_eur`)
+
+![`r fig_1km_1km_Raggr_DMP_eur_scat`](`r orig_Raggr_DMP_eur_scat`)
+
+&nbsp;
+
+
+
+
+## DMP resampled vs the original 1km product: Western Africa
+```{r echo = FALSE}
+fig_1km_1km_Raggr_DMP_wafr <- fig_num(name = "f_1km_1km_Raggr_DMP_wafr", caption = "Original DMP map at 1km resolution and the resampled one using the R-based tool for the Western African study area")
+orig_Raggr_DMP_wafr <- paste0(path2save_DMP_WAfr, "/dmp1km_1kmResampled_RAggr.jpg")
+
+fig_1km_1km_Raggr_DMP_wafr_scat <- fig_num(name = "f_1km_1km_Raggr_DMP_wafr_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original DMP product against the values of the same pixels of the resampled map using the R tool (blue points) for Western Africa. Also the regression (red) line")
+orig_Raggr_DMP_wafr_scat <- paste0(path2save_DMP_WAfr, "/resample_correlation_RAggr.jpg")
+
+```
+
+In `r fig_num("f_1km_1km_Raggr_DMP_wafr", display = "cite")` it can be seen some more No Data areas in the resampled DMP product than in the original. However, both the scatterplot (`r fig_num("f_1km_1km_Raggr_DMP_wafr_scat", display = "cite")`) and the computed statistics, which were the best of all analysed products, confirmed the good performance of the resample tool in this area. While Pearson's correlation was `r comp_results[10, 2]`, RMSE gave `r comp_results[10, 3]` and MAE, `r comp_results[10, 4]`
+
+![`r fig_1km_1km_Raggr_DMP_wafr`](`r orig_Raggr_DMP_wafr`)
+
+![`r fig_1km_1km_Raggr_DMP_wafr_scat`](`r orig_Raggr_DMP_wafr_scat`)
+
+&nbsp;
 
 
 
 # Conclusions
 
-After the discontinuity on the supply of NRT vegetation-related products at 1km resolution, the Global Land service has made available two resample tools based on different programming languages (i.e. R and QGIS/Python) in order to ease the users to keep producing their own time series at that resolution. In this document we show several assessments made on the performance of these two tools in resampling different 300m products (i.e. NDVI and LAI) and in different landscape typologies (i.e. EBF and non-EBF).
+After the discontinuity on the supply of NRT vegetation-related products at 1km resolution, the Global Land service has made available a resample tool based on the R programming languages in order to ease the users to keep producing their own time series at that resolution. In this document we show several assessments made on the performance of this tool in resampling different 300m products and in different landscape typologies (i.e. EBF and non-EBF).
 
-The results showed similar and good performance of the two tools in non-EBF landscapes, both for NDVI and for LAI products. In contrast, the evaluation of the resample results of LAI in an EBF area in the Amazonia gave poorer results. This fact is likely due to the different algorithm implemented in the production of the 10-day vegetation-related global products at 1km and 300m resolution. In light of this, the users must be aware of these differences when using these two tools or any other resampling approach. 
+In general terms, the results showed similar and good performance of the tool in non-EBF landscapes for all the tested products. In contrast, the evaluation of the resample results of LAI, FAPAR and FCOVER in an EBF area in the Amazonia gave poorer results. This fact is likely due to the different algorithm implemented in the production of the 10-day vegetation-related global products at 1km and 300m resolution. In light of this, the users must be aware of these differences when using this tool or any other resampling approach. 
 
 
 
