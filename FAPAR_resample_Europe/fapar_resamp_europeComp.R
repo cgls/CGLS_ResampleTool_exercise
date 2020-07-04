@@ -238,10 +238,10 @@ comp_results[1, 1] <- "orig-1km__resampl-1km-R-Aggreg"
 rsmpl_df <- data.frame(getValues(fapar1km_rstr), getValues(r300m_resampled1km_Aggr))
 
 sum(complete.cases(rsmpl_df))
-rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
+#rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
 
 # Pearson's correlation coefficient
-rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
+rsmpl_df_pearson <- cor(rsmpl_df[complete.cases(rsmpl_df), 1:2], method = "pearson")[2, 1]
 rsmpl_df_pearson
 rsmpl_df_pearson^2  # if we fit a linear regression (see below), this is R^2 (R squared)
 comp_results[1, 2] <- rsmpl_df_pearson
@@ -249,7 +249,8 @@ comp_results[1, 2] <- rsmpl_df_pearson
 # Plotting correlation (scatterplot)
 perc_subsample <- 1   # percentage of points for plotting
 num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
-rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
+smple <- sample(nrow(rsmpl_df), num_subsample)
+rsmpl_df_subsample <- rsmpl_df[smple, ]
 
 jpeg(paste0(path2save, "/resample_correlation_RAggr.jpg"))
 xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.fapar1km_rstr., 
@@ -260,11 +261,14 @@ xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsampl
        main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
        sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
 )
+#grid.circle(0.15, 0.40, 0.13, 
+#            gp = gpar(fill = "transparent", col = "red", lwd = 1.5))
 dev.off()
 
 
 # Calculating differences (errors)
 head(rsmpl_df)
+rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
 rsmpl_df$diff <- abs(rsmpl_df$getValues.fapar1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr.)
 rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.fapar1km_rstr., 1) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 1))
 rsmpl_df$diff3 <- abs(round(rsmpl_df$getValues.fapar1km_rstr., 3) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 3))
@@ -293,6 +297,69 @@ comp_results[1, 4] <- mae
 #summary(lm_obj)
 #lm_obj_summary <- summary(lm_obj)
 #round(lm_obj_summary$r.squared, 10) == round(rsmpl_df_pearson^2, 10)
+
+
+# Saving stuff for the report
+stuff2save <- c("comp_results", "my_extent", "img_date")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fapar_europe_4Report.RData"))
+
+
+## Mapping the largest errors ####
+rsmpl_df <- data.frame(getValues(fapar1km_rstr), getValues(r300m_resampled1km_Aggr))
+rsmpl_df$diff <- abs(rsmpl_df$getValues.fapar1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr.)
+round(quantile(rsmpl_df$diff, seq(0, 1, 0.1), na.rm = TRUE), 3)
+perc95 <- round(as.vector(quantile(rsmpl_df$diff, c(0.96), na.rm = TRUE)), 3)
+rsmpl_df$groups <- NA
+rsmpl_df$groups[!is.na(rsmpl_df$getValues.fapar1km_rstr.) |
+                  !is.na(rsmpl_df$getValues.r300m_resampled1km_Aggr.)] <- 0
+#rsmpl_df$groups[rsmpl_df$diff >= perc95] <- "b"
+rsmpl_df$groups[(rsmpl_df$getValues.fapar1km_rstr. < 0.14 &
+                  rsmpl_df$getValues.r300m_resampled1km_Aggr. > 0.04 &
+                  rsmpl_df$diff >= perc95)] <- 1
+
+# scatterplot
+#perc_subsample <- 1   # percentage of points for plotting
+#num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
+rsmpl_df_subsample <- rsmpl_df[smple, ]
+
+#rsmpl_df_subsample$groups <- "a"
+#rsmpl_df_subsample$groups[rsmpl_df_subsample$getValues.fapar1km_rstr. > 5.2 &
+#                            rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. < 4] <- "b"
+
+jpeg(paste0(path2save, "/resample_correlation_RAggr_largestErr.jpg"))
+xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.fapar1km_rstr., 
+       type = c("p"),
+       groups = factor(rsmpl_df_subsample$groups, labels = c("Regular points", "Points to be checked")),
+       auto.key = list(columns = 1),
+       xlab = "1km original FAPAR product",
+       ylab = "1km resampled FAPAR image (R)",
+       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
+       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
+)
+dev.off()
+
+# mapping
+fapar1km_rstr_errors <- fapar1km_rstr
+fapar1km_rstr_errors <- setValues(fapar1km_rstr_errors, as.matrix(as.numeric(rsmpl_df$groups)))
+fapar1km_rstr_errors
+
+jpeg(paste0(path2save, "/fapar1km_1kmResampled_RAggr_LargerErrors.jpg"))
+#brks <- c(0, maxValue(fapar1km_rstr_errors))
+#perc95 <- round(as.vector(quantile(rsmpl_df$diff, c(0.95), na.rm = TRUE)), 3)
+plot(fapar1km_rstr_errors, col = c("white", "magenta1"), colNA = "grey88", 
+     #breaks = brks, 
+     legend = FALSE#,
+     #main = "Absolute Error:  |orig1km - resamp1km|  "#,
+     #sub = paste0("95th percentile = ", perc95)
+)
+#legend("bottom", legend = paste0("Absolute Error: ", perc95, " to ", maxValue(fapar1km_rstr_errors)),
+#       fill = "red", inset = 0.02)
+legend("bottom", 
+       legend = c(paste0("Checked cells (n = ", sum(rsmpl_df$groups == 1, na.rm = TRUE), ")")),
+       fill = c("magenta1"), inset = 0.005)
+dev.off()
+
+
 
 
 # Saving stuff for the report

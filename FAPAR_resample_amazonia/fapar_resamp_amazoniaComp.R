@@ -248,7 +248,7 @@ rsmpl_df_pearson^2  # if we fit a linear regression (see below), this is R^2 (R 
 comp_results[1, 2] <- rsmpl_df_pearson
 
 # Plotting correlation (scatterplot)
-perc_subsample <- 1   # percentage of points for plotting
+perc_subsample <- 10   # percentage of points for plotting
 num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
 rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
 

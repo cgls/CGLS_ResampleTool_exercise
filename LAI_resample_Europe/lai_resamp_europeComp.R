@@ -267,8 +267,8 @@ jpeg(paste0(path2save, "/resample_correlation_RAggr.jpg"))
 xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
        type = c("p", "r"),
        col.line = "red",
-       xlab = "1km original lai product",
-       ylab = "1km resampled lai image (R)",
+       xlab = "1km original LAI product",
+       ylab = "1km resampled LAI image (R)",
        main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
        sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
 )

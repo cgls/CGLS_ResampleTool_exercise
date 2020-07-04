@@ -228,11 +228,11 @@ dev.off()
 
 ## Resampling using resample() ####
 
-r300m_resampled1km_Bilinear <- resample(lai300m_rstr, lai1km_rstr, 
-                                        method = "bilinear", 
-                                        filename = paste0(path2save, "/r300m_resampled1km_Bilinear.tif"),
-                                        overwrite = TRUE)
-
+#r300m_resampled1km_Bilinear <- resample(lai300m_rstr, lai1km_rstr, 
+#                                        method = "bilinear", 
+#                                        filename = paste0(path2save, "/r300m_resampled1km_Bilinear.tif"),
+#                                        overwrite = TRUE)
+#
 
 
 
@@ -245,18 +245,19 @@ comp_results[1, 1] <- "orig-1km__resampl-1km-R-Aggreg"
 rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(r300m_resampled1km_Aggr))
 
 sum(complete.cases(rsmpl_df))
-rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
+#rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
 
 # Pearson's correlation coefficient
-rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
+rsmpl_df_pearson <- cor(rsmpl_df[complete.cases(rsmpl_df), 1:2], method = "pearson")[2, 1]
 rsmpl_df_pearson
 rsmpl_df_pearson^2  # if we fit a linear regression (see below), this is R^2 (R squared)
 comp_results[1, 2] <- rsmpl_df_pearson
 
 # Plotting correlation (scatterplot)
-perc_subsample <- 1   # percentage of points for plotting
+perc_subsample <- 10   # percentage of points for plotting
 num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
-rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
+smple <- sample(nrow(rsmpl_df), num_subsample)
+rsmpl_df_subsample <- rsmpl_df[smple, ]
 
 jpeg(paste0(path2save, "/resample_correlation_RAggr.jpg"))
 xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
@@ -272,6 +273,7 @@ dev.off()
 
 # Calculating differences (errors)
 head(rsmpl_df)
+rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
 rsmpl_df$diff <- abs(rsmpl_df$getValues.lai1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr.)
 rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.lai1km_rstr., 1) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 1))
 rsmpl_df$diff3 <- abs(round(rsmpl_df$getValues.lai1km_rstr., 3) - round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 3))
@@ -294,6 +296,61 @@ comp_results[1, 4] <- mae
 # Saving stuff for the report
 stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
+
+
+## Mapping the largets errors ####
+rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(r300m_resampled1km_Aggr))
+rsmpl_df$diff <- abs(rsmpl_df$getValues.lai1km_rstr. - rsmpl_df$getValues.r300m_resampled1km_Aggr.)
+round(quantile(rsmpl_df$diff, seq(0, 1, 0.1), na.rm = TRUE), 3)
+perc95 <- round(as.vector(quantile(rsmpl_df$diff, c(0.95), na.rm = TRUE)), 3)
+rsmpl_df$groups <- NA
+rsmpl_df$groups[!is.na(rsmpl_df$getValues.lai1km_rstr.) |
+                  !is.na(rsmpl_df$getValues.r300m_resampled1km_Aggr.)] <- "a"
+rsmpl_df$groups[rsmpl_df$diff >= perc] <- "b"
+
+# scatterplot
+#perc_subsample <- 10   # percentage of points for plotting
+#num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
+rsmpl_df_subsample <- rsmpl_df[smple, ]
+
+#rsmpl_df_subsample$groups <- "a"
+#rsmpl_df_subsample$groups[rsmpl_df_subsample$getValues.lai1km_rstr. > 5.2 &
+#                            rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. < 4] <- "b"
+
+jpeg(paste0(path2save, "/resample_correlation_RAggr_largestErr.jpg"))
+xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
+       type = c("p"),
+       groups = factor(rsmpl_df_subsample$groups, labels = c("Error < 95th Perc", "Error >= 95th Perc")),
+       auto.key = list(columns = 1),
+       xlab = "1km original lai product",
+       ylab = "1km resampled lai image (R)",
+       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
+       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
+)
+dev.off()
+
+# mapping
+lai1km_rstr_errors <- lai1km_rstr
+lai1km_rstr_errors <- setValues(lai1km_rstr_errors, as.matrix(as.numeric(round(rsmpl_df$diff, 3))))
+lai1km_rstr_errors
+
+jpeg(paste0(path2save, "/lai1km_1kmResampled_RAggr_LargerErrors.jpg"))
+brks <- c( minValue(lai1km_rstr_errors), perc95, maxValue(lai1km_rstr_errors))
+#perc95 <- round(as.vector(quantile(rsmpl_df$diff, c(0.95), na.rm = TRUE)), 3)
+plot(lai1km_rstr_errors, col = c("blue", "red"), colNA = "grey88", 
+     breaks = brks, 
+     legend = FALSE,
+     main = "Absolute Error:  |orig1km - resamp1km|  "#,
+     #sub = paste0("95th percentile = ", perc95)
+)
+#legend("bottom", legend = paste0("Absolute Error: ", perc95, " to ", maxValue(lai1km_rstr_errors)),
+#       fill = "red", inset = 0.02)
+legend("bottom", 
+       legend = c(paste0("Absolute Error >= ", perc95, " (95th Percentile)"), "NoData"),
+       fill = c("red", "white"), inset = 0.005)
+dev.off()
+
+
 
 
 
