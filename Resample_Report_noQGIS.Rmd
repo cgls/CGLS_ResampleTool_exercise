@@ -74,24 +74,27 @@ load(file = paste0(path2save_LAI_Ama, "/ResampleResults_LAI_amazonia_4Report.RDa
 comp_results_LAI_Ama <- comp_results
 my_extent_ama <- my_extent
 img_date_lai <- img_date
-load(file = paste0(path2save_FAPAR_Ama, "/ResampleResults_fapar_amazonia_4Report.RData"), verbose = FALSE)
+load(file = paste0(path2save_FAPAR_Ama, "/ResampleResults_fapar_amazonia_4Report_May19.RData"), verbose = FALSE)
 comp_results_FAPAR_Ama <- comp_results
-img_date_fapar <- img_date
-load(file = paste0(path2save_FAPAR_Eur, "/ResampleResults_fapar_europe_4Report.RData"), verbose = FALSE)
+img_date_fapar2 <- img_date
+load(file = paste0(path2save_FAPAR_Eur, "/ResampleResults_fapar_europe_4Report_May19.RData"), verbose = FALSE)
 comp_results_FAPAR_Eur <- comp_results
 load(file = paste0(path2save_FAPAR_WAfr, "/ResampleResults_fapar_wafrica_4Report.RData"), verbose = FALSE)
 comp_results_FAPAR_WAfr <- comp_results
+img_date_fapar1 <- img_date
 my_extent_wafr <- my_extent
-load(file = paste0(path2save_FCOVER_Eur, "/ResampleResults_fcover_europe_4Report.RData"), verbose = FALSE)
+load(file = paste0(path2save_FCOVER_Eur, "/ResampleResults_fcover_europe_4Report_May19.RData"), verbose = FALSE)
 comp_results_FCOVER_Eur <- comp_results
 img_date_fcover <- img_date
-load(file = paste0(path2save_FCOVER_Ama, "/ResampleResults_fcover_amazonia_4Report.RData"), verbose = FALSE)
+load(file = paste0(path2save_FCOVER_Ama, "/ResampleResults_fcover_amazonia_4Report_May19.RData"), verbose = FALSE)
 comp_results_FCOVER_Ama <- comp_results
-load(file = paste0(path2save_DMP_Eur, "/ResampleResults_dmp_europe_4Report.RData"), verbose = FALSE)
+load(file = paste0(path2save_DMP_Eur, "/ResampleResults_dmp_europe_4Report_May19.RData"), verbose = FALSE)
 comp_results_DMP_Eur <- comp_results
-img_date_dmp <- img_date
+img_date_dmp2 <- img_date
 load(file = paste0(path2save_DMP_WAfr, "/ResampleResults_dmp_wafrica_4Report.RData"), verbose = FALSE)
 comp_results_DMP_WAfr <- comp_results
+img_date_dmp1 <- img_date
+
 
 
 table_num <- captioner::captioner(prefix = "Table")
@@ -108,9 +111,9 @@ fig_num <- captioner::captioner(prefix = "Figure")
 
 The Copernicus Global Land Service (CGLS; https://land.copernicus.eu/global/) is a component of the Land Monitoring Core Service (LMCS) of Copernicus, the European flagship programme on Earth Observation. CGLS systematically produces and distributes time series of global bio-geophysical products on the status and evolution of the land surface, at different spatial resolutions. These products are used to monitor the vegetation, the water cycle, the energy budget and the terrestrial cryosphere. 
 
-The CGLS vegetation-related products (i.e. NDVI, LAI, FAPAR...), based on PROBA-V observations, have been distributed at 1km and 333m until June, 2020. However, as of July, 2020, all Near Real Time (NRT) production of the vegetation biophysical variables, based on Sentinel-3 observations, are no longer provided at 1km resolution. Nonetheless, the users who might be interested on continuing their 1km time series can use a resample of the new 333m products.
+The CGLS vegetation-related products (i.e. NDVI, LAI, FAPAR...), based on PROBA-V observations, have been distributed at 1km and 333m spatial resolution until June, 2020. However, as of July, 2020, all Near Real Time (NRT) production of the vegetation biophysical variables, based on Sentinel-3 observations, are no longer provided at 1km resolution. Nonetheless, users interested in continuing their 1km time series can use a resample of the new 333m products.
 
-The science and production teams of the Global Land service, in support to the 1km users, provide different tools to make their own resampling exercises from the new 333m products to a 1km resolution, corresponding to the usual 1km grid. A Notebook with R code (R Core Team, 2019) and some explanations can be found at https://nbviewer.jupyter.org/github/VITObelgium/notebook-samples/blob/master/datasets/probav/ResampleTool_R_notebook.ipynb.
+The science and production teams of the Global Land service, in support to the 1km users, provide different tools to make their own resampling exercises from the new 333m products to a 1km resolution, corresponding to the usual 1km grid. A Notebook with R code (R Core Team, 2019) and some explanations can be found at https://nbviewer.jupyter.org/github/cgls/ResampleTool_notebook/blob/master/ResampleTool_R_notebook.ipynb (viewer) and https://github.com/cgls/ResampleTool_notebook.
 
 In this document we present a comparison of different resampled products using this R-based tool with the original CGLS products at 1km resolution for the same study area and image date.
 
@@ -133,9 +136,11 @@ work_extent_wafr <- paste(c("xmin = ", "xmax = ", "ymin = ", "ymax = "), work_ex
 Sys.setlocale("LC_TIME", "C")
 img_date_ndvi <- format(as.Date(img_date_ndvi), "%B %d, %Y")
 img_date_lai <- format(as.Date(img_date_lai), "%B %d, %Y")
-img_date_fapar <- format(as.Date(img_date_fapar), "%B %d, %Y")
+img_date_fapar1 <- format(as.Date(img_date_fapar1), "%B %d, %Y")
+img_date_fapar2 <- format(as.Date(img_date_fapar2), "%B %d, %Y")
 img_date_fcover <- format(as.Date(img_date_fcover), "%B %d, %Y")
-img_date_dmp <- format(as.Date(img_date_dmp), "%B %d, %Y")
+img_date_dmp1 <- format(as.Date(img_date_dmp1), "%B %d, %Y")
+img_date_dmp2 <- format(as.Date(img_date_dmp2), "%B %d, %Y")
 
 fig_ndvi_300m_eur <- fig_num(name = "f_ndvi_300_eur", caption = "NDVI map at 333m resolution for the European-North African working extent")
 orig_ndvi_300map <- paste0(path2save_NDVI_Eur, "/ndvi_300m_orig_Eur.jpg")
@@ -148,20 +153,30 @@ orig_fapar_300map <- paste0(path2save_FAPAR_WAfr, "/fapar_300m_orig_WAfr.jpg")
 
 Product <- c("Normalized Difference Vegetation Index", "Leaf Area Index", "Fraction of Absorbed Photosynthetically Active Radiation", "Fraction of Green Vegetation Cover", "Dry Matter Productivity")
 Acronym <- c("NDVI", "LAI", "FAPAR", "FCOVER", "DMP")
-Date <- c(img_date_ndvi, img_date_lai, img_date_fapar, img_date_fcover, img_date_dmp)
+Date <- c(img_date_ndvi, 
+          img_date_lai, 
+          paste0(img_date_fapar1, " / ", img_date_fapar2), 
+          img_date_fcover, 
+          paste0(img_date_dmp1, " / ", img_date_dmp2))
 products_df <- data.frame(Product, Acronym, Date)
 prods_df <- table_num(name = "prods_table", caption = "Products and their image date used in this assessment")
 
 cutoff_method_df <- read.csv(paste0("/Users/xavi_rp/Documents/D6_LPD/ResampleTool_notebook", "/Table_cutoff_and_resampleMethod.csv"),
                              stringsAsFactors = FALSE,
                              header = TRUE)
+cutoff_method_df <- cutoff_method_df[cutoff_method_df$Resample.method != "*", ]
+cutoff_method_df[cutoff_method_df$Data.layer.in.file == "LAI", 1] <- "LAI 300m *"
+cutoff_method_df[cutoff_method_df$Data.layer.in.file == "FAPAR", 1] <- "FAPAR 300m *"
+cutoff_method_df[cutoff_method_df$Data.layer.in.file == "FCOVER", 1] <- "FCOVER 300m *"
+cutoff_method_df[cutoff_method_df$Data.layer.in.file == "DMP", 1] <- "DMP 300m *"
+cutoff_method_df[cutoff_method_df$Data.layer.in.file == "GDMP", 1] <- "GDMP 300m *"
 
 cutoff_df <- table_num(name = "cutoff_table", caption = "Cutoff of valid values for each product/layer")
 
 
 ```
 
-The analysis was made using different subsets of several 10-daily CGLS vegetation-related global products. See `r table_num("prods_table", display = "cite")` for the products used in this assessment, as well as their image date. 
+The analysis was made using different subsets of several 10-daily CGLS vegetation-related global products derived from PROBA-V data. See `r table_num("prods_table", display = "cite")` for the products used in this assessment, as well as their image date. FAPAR and DMP were analysed for two different dates in order to be compared with other products in different areas and/or seasons (different amount of clouds).
 
 `r kable(products_df, caption = prods_df)`
 &nbsp;
@@ -215,7 +230,7 @@ In order to assess the performance of the resampling methods, besides mapping th
 
 In addition, some maps representing the spatial distribution of the larger absolute errors (|original1km – resampled1km|) were also generated for some products/areas to observe possible spatial patterns of those errors.  
 
-The R code used to perform the assessment reported in this document can be seen at https://github.com/xavi-rp/NDVI_resample. 
+The R code used to perform the assessments reported in this document can be found at https://github.com/xavi-rp/NDVI_resample. 
 &nbsp;
 
 
@@ -232,13 +247,24 @@ comp_results[1:10, 1] <- c("NDVI_Europe/NorthAfrica",
                           "FAPAR_Europe/NorthAfrica", "FAPAR_Amazonia", "FAPAR_WesternAfrica", 
                           "FCOVER_Europe/NorthAfrica","FCOVER_Amazonia",
                           "DMP_Europe/NorthAfrica", "DMP_WesternAfrica")
-names(comp_results) <-c("Assessment", "Pearson's *r*", "RMSE", "MAE")
+comp_results$`Image Date` <- c(img_date_ndvi, 
+                               img_date_lai, 
+                               img_date_lai, 
+                               img_date_fapar2,
+                               img_date_fapar2,
+                               img_date_fapar1, 
+                               img_date_fcover, 
+                               img_date_fcover, 
+                               img_date_dmp2,
+                               img_date_dmp1)
+#comp_results <- comp_results[, c(1, 5, 2:4)]
+names(comp_results) <-c("Assessment", "Image Date", "Pearson's *r*", "RMSE", "MAE")
 
 comp_results_df <- table_num(name = "comp_results_table", caption = "Pearson's *r*, Root Mean Square Error (RMSE) and Mean Absolute Error (MAE) of each case study")
 
 ```
 
-In this document we present several assessments depending on the CGLS product analysed, the area of study and the resampling tool in use. `r table_num("comp_results_table", display = "cite")` summarizes the three metrics calculated in each assessment, so that an overview of all the cases is provided. In the following subsections each case will be developed separately and in more detail. 
+In this document we present several assessments depending on the CGLS product analysed and the area of study. `r table_num("comp_results_table", display = "cite")` summarizes the three metrics calculated in each assessment, so that an overview of all the cases is provided. In the following subsections each case will be developed separately and in more detail. 
 
 `r pander(comp_results, caption = comp_results_df)`
 &nbsp;
@@ -274,7 +300,7 @@ As it can be seen in the scatterplot (`r fig_num("f_1km_1km_Raggr_NDVI_eur_scat"
 &nbsp;
 
 
-Finally, `r fig_num("f_1km_1km_Raggr_NDVI_eur_errors", display = "cite")` shows how not a particular spatial pattern of the largest (> 0.103) absolute errors could be observed in the study area. 
+Finally, `r fig_num("f_1km_1km_Raggr_NDVI_eur_errors", display = "cite")` shows that the largest (> 0.103) absolute errors do not follow a particular spatial pattern in the study area. 
 
 ![`r fig_1km_1km_Raggr_NDVI_eur_errors`](`r orig_Raggr_NDVI_eur_errors`)
 
@@ -335,9 +361,9 @@ Both the scatterplot (`r fig_num("f_1km_1km_Raggr_LAI_ama_scat", display = "cite
 
 &nbsp;
 
-In order to better understand these worse results, a map representing separately the cells with absolute errors (|orig1km - resamp1km|) larger than the 95^th^ percentile was produced (`r fig_num("f_1km_1km_Raggr_LAI_ama_ErrorMap", display = "cite")`). This map shows how most of the largest errors were close the course of the rivers. 
+In order to better understand these worse results, a map representing separately the cells with absolute errors (|orig1km - resamp1km|) larger than the 95^th^ percentile was produced (`r fig_num("f_1km_1km_Raggr_LAI_ama_ErrorMap", display = "cite")`). This map shows how most of the largest errors were close to the course of the rivers. 
 
-The reason of such poorer results might be mainly due to the differences in the temporal composition and the cloud gap filling method used for the production of the 1km and the 300m products. In this sense, for the former, a more complex algorithm was implemented in the processing chain in order to improve the final generated 10-day vegetation-related global product, especially in EBFs, such is the case for the Amazonian rainforest. 
+The reason of such poorer results might be mainly due to the differences in the temporal composition and the cloud gap filling method used for the production of the 1km (Verger et al., 2019) and the 300m (Baret, et al., 2016) products. In this sense, for the former, a more complex algorithm was implemented in the processing chain in order to improve the final generated 10-day vegetation-related global product, especially in EBFs, such is the case for the Amazonian rainforest. 
 
 ![`r fig_1km_1km_Raggr_LAI_ama_ErrorMap`](`r orig_Raggr_LAI_ama_ErrorMap`)
 
@@ -366,7 +392,7 @@ orig_Raggr_FAPAR_eur_ErrorMap <- paste0(path2save_FAPAR_Eur, "/fapar1km_1kmResam
 
 &nbsp;
 
-Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_results[3, 3]` and MAE = `r comp_results[4, 4]`) and the scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")`) showed general good results of the resample, in line with NDVI and a bit better then LAI for the same region. However, there were a subgroup of cells of the original 1km product with values lower than 0.14, which gave much larger resampled values, and needed to be carefully checked. They can be seen in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")` and mapped in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_ErrorMap", display = "cite")`. **Something to say about them??? Any explanation???**
+Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_results[4, 3]` and MAE = `r comp_results[4, 4]`) and the scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")`) showed general good results of the resample, in line with NDVI and a bit better then LAI for the same region. However, there were a subgroup of cells of the original 1km product with values lower than 0.14, which gave much larger resampled values, and needed to be carefully checked. They can be seen in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")` and mapped in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_ErrorMap", display = "cite")`. They might be related to open water surfaces (e.g. lakes), therefore using a water mask could improve the results of the resample.
 
 ![`r fig_1km_1km_Raggr_FAPAR_eur_scat`](`r orig_Raggr_FAPAR_eur_scat`)
 
@@ -394,7 +420,7 @@ As seen in `r fig_num("f_1km_1km_Raggr_FAPAR_ama", display = "cite")`, the resam
 
 &nbsp;
 
-The following scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_ama_scat", display = "cite")`) and the calculated statistics (Pearson's *r* = `r comp_results[5, 2]`, RMSE = `r comp_results[5, 3]` and MAE = `r comp_results[5, 4]`) showed not very good results of the resample, in line with the LAI products for the same region, although a bit better for FAPAR.  
+The following scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_ama_scat", display = "cite")`) and the calculated statistics (Pearson's *r* = `r comp_results[5, 2]`, RMSE = `r comp_results[5, 3]` and MAE = `r comp_results[5, 4]`) showed not very good results of the resample, in line with the LAI products for the same region.  
 
 ![`r fig_1km_1km_Raggr_FAPAR_ama_scat`](`r orig_Raggr_FAPAR_ama_scat`)
 
@@ -412,7 +438,7 @@ orig_Raggr_FAPAR_wafr_scat <- paste0(path2save_FAPAR_WAfr, "/resample_correlatio
 
 ```
 
-In `r fig_num("f_1km_1km_Raggr_FAPAR_wafr", display = "cite")` it can be seen, similarly than in the Amazonian study area, thet the resampled to 1km FAPAR map shows much more cells with NoData than the original 1km product in the EBF areas. Again, this is likely due to the gap filling method used in the version 2 of the Global Land products used in the exercises presented in this document. 
+In `r fig_num("f_1km_1km_Raggr_FAPAR_wafr", display = "cite")` it can be seen, similarly than in the Amazonian study area, that the resampled FAPAR map shows much more cells with NoData than the original 1km product in the EBF areas. Again, this is likely due to the gap filling method used in the version 2 of the 1km FAPAR products used in the exercises and presented in this document. 
 
 ![`r fig_1km_1km_Raggr_FAPAR_wafr`](`r orig_Raggr_FAPAR_wafr`)
 
@@ -442,7 +468,7 @@ FCOVER is another CGLS product analysed in this document. `r fig_num("f_1km_1km_
 
 &nbsp;
 
-The scatterplot (`r fig_num("f_1km_1km_Raggr_FCOVER_eur_scat", display = "cite")`) and Pearson's *r* (`r comp_results[7, 2]`) of FCOVER in this region showed slightly worse results than the resampled products of NDVI and FAPAR, although still good. The same was observed for RMSE and MAE (`r comp_results[7, 3]` and `r comp_results[7, 4]`, respectively), although valid range of FCOVER goes slightly upper (0.00:1.00). 
+The scatterplot (`r fig_num("f_1km_1km_Raggr_FCOVER_eur_scat", display = "cite")`) and Pearson's *r* (`r comp_results[7, 2]`) of FCOVER in this region showed slightly worse results than the resampled products of NDVI and in line with FAPAR. The same was observed for RMSE and MAE (`r comp_results[7, 3]` and `r comp_results[7, 4]`, respectively), although valid range of FCOVER goes slightly upper (0.00:1.00). 
 
 ![`r fig_1km_1km_Raggr_FCOVER_eur_scat`](`r orig_Raggr_FCOVER_eur_scat`)
 
@@ -513,20 +539,18 @@ In `r fig_num("f_1km_1km_Raggr_DMP_wafr", display = "cite")` it can be seen some
 
 # Conclusions
 
-After the discontinuity on the supply of NRT vegetation-related products at 1km resolution, the Global Land service has made available a resample tool based on the R programming languages in order to ease the users to keep producing their own time series at that resolution. In this document we show several assessments made on the performance of this tool in resampling different 300m products and in different landscape typologies (i.e. EBF and non-EBF).
+After the discontinuity on the near-real time (10-daily) supply of NRT vegetation-related products at 1km resolution, the Global Land service has made available a resample tool based on the R programming language in order to ease the users to keep producing their own time series at that resolution. In this document we show several assessments made on the performance of this tool in resampling different 300m products and in different landscape typologies (i.e. Evergreen Broadleaf Forest (EBF) or not).
 
-In general terms, the results showed similar and good performance of the tool in non-EBF landscapes for all the tested products. In contrast, the evaluation of the resample results of LAI, FAPAR and FCOVER in an EBF area in the Amazonia gave poorer results. This fact is likely due to the different algorithm implemented in the production of the 10-day vegetation-related global products at 1km and 300m resolution. In light of this, the users must be aware of these differences when using this tool or any other resampling approach. 
+In general terms, the results showed similar and good performance of the tool in non-EBF landscapes for all the tested products. In contrast, the evaluation of the resample results of LAI, FAPAR and FCOVER in an EBF area in the Amazonia gave poorer results. This fact is likely due to the differences in the algorithms implemented for the production of the 10-day vegetation-related global products at 1km and 300m resolution. In light of this, the users must be aware of these differences when using this tool or any other resampling approach.
 
 
 
 # References
 
+Baret, F., Weiss, M., Verger, A. & Smets, B. (2016). ATBD for LAI, FAPAR and FCover from PROBA-V 300m resolution (GEOV3). ImagineS_RP2.1_ATBD-LAI300m_I1.73. URL: https://land.copernicus.eu/global/sites/cgls.vito.be/files/products/ImagineS_RP2.1_ATBD-LAI300m_I1.73.pdf [06/07/2020]
+
 Hijmans, R.J. 2019. raster: Geographic Data Analysis and Modeling. R package version 3.0-2. https://CRAN.R-project.org/package=raster
 
-QGIS Development Team. 2009. QGIS Geographic Information System. Open Source Geospatial Foundation. URL http://qgis.org
+R Core Team. 2019. R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
 
-R Core Team. 2019. R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-
-Van Rossum, G. & Drake, F.L. 2009. Python 3 Reference Manual, Scotts Valley, CA: CreateSpace.
-
-
+Verger, A., Baret, F. & Weiss, M. (2019) Algorithm Theoretical Basis Document of the Collection 1km LAI, FAPAR and FCOVER Version 2 derived from PROBA-V data. GIOGL1_ATBD_LAI1km-V2_I1.41. URL: https://land.copernicus.eu/global/sites/cgls.vito.be/files/products/CGLOPS1_ATBD_LAI1km-V2_I1.41.pdf [06/07/2020]

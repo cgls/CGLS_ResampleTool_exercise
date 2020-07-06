@@ -37,9 +37,9 @@ if(Sys.info()[4] == "D01RI1700371"){
 
 setwd(path2save)
   
-nc_file300m <- paste0(path2data, "/c_gls_NDVI300_PROD-DESC_202005010000_GLOBE_PROBAV_V1.0.1.nc")
+nc_file300m <- paste0(path2data, "/ndvi300_v1_333m/ndvi300_v1_333m_c_gls_NDVI300_201905010000_GLOBE_PROBAV_V1.0.1.nc")
 qgis_resamp_europe_avrge <- paste0(path2data, "/c_gls_NDVI300_201905110000_GLOBE_PROBAV_V1.0.1.nc.tif")
-ndvi_1km_orig <- paste0(path2data, "/ndvi_v2_1km_c_gls_NDVI_202005010000_GLOBE_PROBAV_V2.2.1.nc")
+ndvi_1km_orig <- paste0(path2data, "/ndvi_v2_1km/ndvi_v2_1km_c_gls_NDVI_201905010000_GLOBE_PROBAV_V2.2.1.nc")
 
 
 
@@ -178,9 +178,9 @@ ndvi300m_rstr <- ndvi_300m_orig_Eur
 
 cuttoff_NA_err <- 0.92  # everything >= cuttoff_NA_err, must be removed for the calculations
 
-jpeg(paste0(path2save, "/ndvi300m_kk.jpg"))
-plot(ndvi300m_rstr, breaks = c(minValue(ndvi300m_rstr), cuttoff_NA_err, maxValue(ndvi300m_rstr)), col = c("blue", "red"))
-dev.off()
+#jpeg(paste0(path2save, "/ndvi300m_kk.jpg"))
+#plot(ndvi300m_rstr, breaks = c(minValue(ndvi300m_rstr), cuttoff_NA_err, maxValue(ndvi300m_rstr)), col = c("blue", "red"))
+#dev.off()
 
 
 # 300m product
@@ -190,10 +190,18 @@ sum(as.data.frame(ndvi300m_rstr) > cuttoff_NA_err, na.rm = TRUE)
 ndvi300m_rstr[ndvi300m_rstr > cuttoff_NA_err] <- NA  # setting to NA
 sum(is.na(as.data.frame(ndvi300m_rstr)))
 
+#jpeg(paste0(path2save, "/ndvi_300m_orig_Eur.jpg"))
+#plot(ndvi300m_rstr)
+#dev.off()
+
+
 # 1km product
 ndvi1km_rstr[ndvi1km_rstr > cuttoff_NA_err] <- NA   # setting to NA
 sum(is.na(as.data.frame(ndvi1km_rstr)))
 
+#jpeg(paste0(path2save, "/ndvi_1km_orig_Eur.jpg"))
+#plot(ndvi1km_rstr)
+#dev.off()
 
 
 ## Resampling using aggregate() ####
@@ -250,12 +258,12 @@ dev.off()
 
 ## Resampling using resample() ####
 
-r300m_resampled1km_Bilinear <- resample(ndvi300m_rstr, ndvi1km_rstr, 
-                                        method = "bilinear", 
-                                        filename = paste0(path2save, "/r300m_resampled1km_Bilinear.tif"),
-                                        overwrite = TRUE)
-
-
+#r300m_resampled1km_Bilinear <- resample(ndvi300m_rstr, ndvi1km_rstr, 
+#                                        method = "bilinear", 
+#                                        filename = paste0(path2save, "/r300m_resampled1km_Bilinear.tif"),
+#                                        overwrite = TRUE)
+#
+#
 
 
 ## Comparison 'original-1km' with '300m-resampled-1km-R_Aggr' ####
@@ -317,11 +325,11 @@ mae <- mean(rsmpl_df$diff)
 comp_results[1, 4] <- mae
 
 
-# Bivariate Linear Regression
-lm_obj <- lm(rsmpl_df$getValues.ndvi1km_rstr. ~ rsmpl_df$getValues.r300m_resampled1km_Aggr.)
-summary(lm_obj)
-lm_obj_summary <- summary(lm_obj)
-round(lm_obj_summary$r.squared, 10) == round(rsmpl_df_pearson^2, 10)
+## Bivariate Linear Regression
+#lm_obj <- lm(rsmpl_df$getValues.ndvi1km_rstr. ~ rsmpl_df$getValues.r300m_resampled1km_Aggr.)
+#summary(lm_obj)
+#lm_obj_summary <- summary(lm_obj)
+#round(lm_obj_summary$r.squared, 10) == round(rsmpl_df_pearson^2, 10)
 
 
 # Mapping the errors

@@ -37,8 +37,16 @@ if(Sys.info()[4] == "D01RI1700371"){
 
 setwd(path2save)
 
-nc_file300m <- paste0(path2data, "/fcover300_v1_333m/fcover300_v1_333m_c_gls_FCOVER300_201805100000_GLOBE_PROBAV_V1.0.1.nc")
-fcover_1km_orig <- paste0(path2data, "/fcover_v2_1km/fcover_v2_1km_c_gls_FCOVER-RT6_201805100000_GLOBE_PROBAV_V2.0.1.nc")
+date <- "august18"
+date <- "may19"
+
+if(date == "may19"){
+  nc_file300m <- paste0(path2data, "/fcover300_v1_333m/fcover300_v1_333m_c_gls_FCOVER300_201905100000_GLOBE_PROBAV_V1.0.1.nc")
+  fcover_1km_orig <- paste0(path2data, "/fcover_v2_1km/fcover_v2_1km_c_gls_FCOVER-RT6_201905100000_GLOBE_PROBAV_V2.0.1.nc")
+}else if(date == "august18"){
+  nc_file300m <- paste0(path2data, "/fcover300_v1_333m/fcover300_v1_333m_c_gls_FCOVER300_201805100000_GLOBE_PROBAV_V1.0.1.nc")
+  fcover_1km_orig <- paste0(path2data, "/fcover_v2_1km/fcover_v2_1km_c_gls_FCOVER-RT6_201805100000_GLOBE_PROBAV_V2.0.1.nc")
+}
 
 
 
@@ -298,6 +306,10 @@ comp_results[1, 4] <- mae
 
 # Saving stuff for the report
 stuff2save <- c("comp_results", "my_extent", "img_date")
-save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fcover_amazonia_4Report.RData"))
 
+if(date == "may19"){
+  save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fcover_amazonia_4Report_May19.RData"))
+}else if(date == "august18"){
+  save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fcover_amazonia_4Report.RData"))
+}
 
