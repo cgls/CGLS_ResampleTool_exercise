@@ -317,17 +317,17 @@ rsmpl_df_subsample <- rsmpl_df[smple, ]
 #rsmpl_df_subsample$groups[rsmpl_df_subsample$getValues.lai1km_rstr. > 5.2 &
 #                            rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. < 4] <- "b"
 
-jpeg(paste0(path2save, "/resample_correlation_RAggr_largestErr.jpg"))
-xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
-       type = c("p"),
-       groups = factor(rsmpl_df_subsample$groups, labels = c("Error < 95th Perc", "Error >= 95th Perc")),
-       auto.key = list(columns = 1),
-       xlab = "1km original lai product",
-       ylab = "1km resampled lai image (R)",
-       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
-       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
-)
-dev.off()
+#jpeg(paste0(path2save, "/resample_correlation_RAggr_largestErr.jpg"))
+#xyplot(rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
+#       type = c("p"),
+#       groups = factor(rsmpl_df_subsample$groups, labels = c("Error < 95th Perc", "Error >= 95th Perc")),
+#       auto.key = list(columns = 1),
+#       xlab = "1km original lai product",
+#       ylab = "1km resampled lai image (R)",
+#       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
+#       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
+#)
+#dev.off()
 
 # mapping
 lai1km_rstr_errors <- lai1km_rstr

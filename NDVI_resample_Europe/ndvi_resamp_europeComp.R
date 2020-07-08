@@ -151,10 +151,12 @@ ndvi_300m_orig_Eur <- crop(ndvi_300m_orig, my_extent)
 as.vector(extent(my_extent))
 as.vector(extent(ndvi_300m_orig_Eur))
 summary(getValues(ndvi_300m_orig_Eur))
+range(getValues(ndvi_300m_orig_Eur))
 
-jpeg(paste0(path2save, "/ndvi_300m_orig_Eur.jpg"))
-plot(ndvi_300m_orig_Eur)
-dev.off()
+
+#jpeg(paste0(path2save, "/ndvi_300m_orig_Eur.jpg"))
+#plot(ndvi_300m_orig_Eur)
+#dev.off()
 
 
 if(all(round(extent(ndvi_300m_orig_Eur)[1], 7) %in% round(x_ext, 7) &
@@ -190,9 +192,9 @@ sum(as.data.frame(ndvi300m_rstr) > cuttoff_NA_err, na.rm = TRUE)
 ndvi300m_rstr[ndvi300m_rstr > cuttoff_NA_err] <- NA  # setting to NA
 sum(is.na(as.data.frame(ndvi300m_rstr)))
 
-#jpeg(paste0(path2save, "/ndvi_300m_orig_Eur.jpg"))
-#plot(ndvi300m_rstr)
-#dev.off()
+jpeg(paste0(path2save, "/ndvi_300m_orig_Eur.jpg"))
+plot(ndvi300m_rstr)
+dev.off()
 
 
 # 1km product

@@ -77,8 +77,10 @@ img_date_lai <- img_date
 load(file = paste0(path2save_FAPAR_Ama, "/ResampleResults_fapar_amazonia_4Report_May19.RData"), verbose = FALSE)
 comp_results_FAPAR_Ama <- comp_results
 img_date_fapar2 <- img_date
+freq_df_FAPAR_Ama <- freq_df
 load(file = paste0(path2save_FAPAR_Eur, "/ResampleResults_fapar_europe_4Report_May19.RData"), verbose = FALSE)
 comp_results_FAPAR_Eur <- comp_results
+freq_df_FAPAR_Eur <- freq_df
 load(file = paste0(path2save_FAPAR_WAfr, "/ResampleResults_fapar_wafrica_4Report.RData"), verbose = FALSE)
 comp_results_FAPAR_WAfr <- comp_results
 img_date_fapar1 <- img_date
@@ -165,12 +167,12 @@ cutoff_method_df <- read.csv(paste0("/Users/xavi_rp/Documents/D6_LPD/ResampleToo
                              stringsAsFactors = FALSE,
                              header = TRUE)
 cutoff_method_df <- cutoff_method_df[cutoff_method_df$Resample.method != "*", ]
-cutoff_method_df[cutoff_method_df$Data.layer.in.file == "LAI", 1] <- "LAI 300m *"
-cutoff_method_df[cutoff_method_df$Data.layer.in.file == "FAPAR", 1] <- "FAPAR 300m *"
-cutoff_method_df[cutoff_method_df$Data.layer.in.file == "FCOVER", 1] <- "FCOVER 300m *"
-cutoff_method_df[cutoff_method_df$Data.layer.in.file == "DMP", 1] <- "DMP 300m *"
-cutoff_method_df[cutoff_method_df$Data.layer.in.file == "GDMP", 1] <- "GDMP 300m *"
-
+#cutoff_method_df[cutoff_method_df$Data.layer.in.file == "LAI", 1] <- "LAI 300m *"
+#cutoff_method_df[cutoff_method_df$Data.layer.in.file == "FAPAR", 1] <- "FAPAR 300m *"
+#cutoff_method_df[cutoff_method_df$Data.layer.in.file == "FCOVER", 1] <- "FCOVER 300m *"
+#cutoff_method_df[cutoff_method_df$Data.layer.in.file == "DMP", 1] <- "DMP 300m *"
+#cutoff_method_df[cutoff_method_df$Data.layer.in.file == "GDMP", 1] <- "GDMP 300m *"
+rownames(cutoff_method_df) <- NULL
 cutoff_df <- table_num(name = "cutoff_table", caption = "Cutoff of valid values for each product/layer")
 
 
@@ -191,7 +193,7 @@ The tests were made in three different areas depending on the products. Firstly,
 
 &nbsp;
 
-The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, for example, digital values in the netCDF (DN) larger than 250 are flagged and need to be converted to NA (No Data). When the netCDF files are read in as a raster object, the digital values are scaled into real NDVI values automatically. Therefore, after reading the files, all pixels with NDVI values larger than 0.92 (= DN 250 x scale + offset) were set to NA. In the same way, all the other products' non-valid values were transformed to NAs according to their valid ranges, which can be seen in `r table_num("cutoff_table", display = "cite")`. In addition, other supporting information of each product can be found both in the netCDF file metadata and in their Product User Manual at https://land.copernicus.eu/global/products/. 
+The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, for example, digital values in the netCDF (DN) larger than 250 are flagged and need to be converted to NA (No Data). When the netCDF files are read in as a raster object, the digital values are scaled into real NDVI values automatically (-0.08:0.93). Therefore, after reading the files, all pixels with NDVI values larger than 0.92 (= 250 x scale + offset; in this case, scale = 0.004 and offset = -0.08) were set to NA. In the same way, all the other products' non-valid values were transformed to NAs according to their valid ranges, which can be seen in `r table_num("cutoff_table", display = "cite")`. In addition, other supporting information of each product can be found both in the netCDF file metadata and in their Product User Manual at https://land.copernicus.eu/global/products/. 
 
 `r kable(cutoff_method_df[, c(1:3, 5:8)], caption = cutoff_df)`
 &nbsp;
@@ -210,17 +212,17 @@ There are several approaches to resample data from a finer to a coarser resoluti
 
 The area-based aggregation method used in this assessment groups rectangular matrix of pixels of the finer resolution image to create a new map with larger cells. In this case, as we wanted to resample from 333m to 1km, a factor of 3 was implemented (i.e. a matrix of 3x3 pixels).
 
-To run the resample, we used the function *aggregate()* of the package *raster* (Hijmans, 2019). *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. For all the products tested the most suitable method is the average. `r table_num("method_table", display = "cite")` shows a recommendation of the best suited method for each product/layer. In addition, as it is also recommended in the tool, it was included the condition that at least 5 out of the 9 pixels had to have valid values (i.e. not NA) to return a valid value for the resampled pixel.
+To run the resample, we used the function *aggregate()* of the package *raster* (Hijmans, 2019). *aggregate()* can perform the calculation using different functions. While the default is the average (*mean()*) it can work also with *modal()*, *max()*, *min()* or even with *ad hoc* functions programmed by the user. `r table_num("method_table", display = "cite")` shows a recommendation of the best suited method for each product and layer. In addition, as it is also recommended in the tool, for those products resampled with *mean*, it was included the condition that at least 5 out of the 9 pixels had to have valid values (i.e. not NA) to return a valid value for the resampled pixel.
 
 
 `r pander(cutoff_method_df[, c(1:3, 9)], caption = method_df)`
-**Note:** \* QFLAG, LENGTH_BEFORE/AFTER and NOBS cannot be resampled due to different implementations for 1km-v2 and 300m-v1 products. For example, LAI-NOBS ranges are 0-120 for 1km-v2 and 0-40 for 300m-v1, or LAI/FAPAR/FCOVER-LENGTH_BEFORE go up to 60 days and up to 210 days, respectively for both products. **this can be expanded with more explanations!!!!!**
+**Note:** Resampled QFLAG, LENGTH_BEFORE/AFTER and NOBS cannot be compared to the 1km products due to different implementations for 1km-v2 and 300m-v1 products. For example, LAI-NOBS ranges are 0-120 for 1km-v2 and 0-40 for 300m-v1, or LAI/FAPAR/FCOVER-LENGTH_BEFORE go up to 60 days and up to 210 days, respectively for both products.
 &nbsp;
 
 
 ## Metrics and plots
 
-In order to assess the performance of the resampling methods, besides mapping the results, three well known and widely used metrics and a scatterplot were produced. The metrics are:
+In order to assess the performance of the resample methods, besides mapping the results, three well known and widely used metrics and a scatterplot were produced. The metrics are:
 
 * Pearson correlation coefficient (Pearson's *r*)
 
@@ -258,7 +260,7 @@ comp_results$`Image Date` <- c(img_date_ndvi,
                                img_date_dmp2,
                                img_date_dmp1)
 #comp_results <- comp_results[, c(1, 5, 2:4)]
-names(comp_results) <-c("Assessment", "Image Date", "Pearson's *r*", "RMSE", "MAE")
+names(comp_results) <-c("Assessment", "Pearson's *r*", "RMSE", "MAE", "Image Date")
 
 comp_results_df <- table_num(name = "comp_results_table", caption = "Pearson's *r*, Root Mean Square Error (RMSE) and Mean Absolute Error (MAE) of each case study")
 
@@ -383,6 +385,13 @@ orig_Raggr_FAPAR_eur_scat <- paste0(path2save_FAPAR_Eur, "/resample_correlation_
 fig_1km_1km_Raggr_FAPAR_eur_ErrorMap <- fig_num(name = "f_1km_1km_Raggr_FAPAR_eur_ErrorMap", caption = "Subgroup of pixels checked in the European/North African study area (in magenta). Regular pixels in white")
 orig_Raggr_FAPAR_eur_ErrorMap <- paste0(path2save_FAPAR_Eur, "/fapar1km_1kmResampled_RAggr_LargerErrors.jpg")
 
+fig_1km_1km_Raggr_FAPAR_QFLAG_eur <- fig_num(name = "f_1km_1km_Raggr_FAPAR_QFLAG_eur", caption = "Resampled QFLAG map at 1km resolution using the R-based tool for the European and north African study area")
+orig_Raggr_FAPAR_QFLAG_eur <- paste0(path2save_FAPAR_Eur, "/r300m_resampled1km_Aggr_QFLAG.jpg")
+
+freq_df <- table_num(name = "freq_table", caption = "Frequencies of number of cells equal to the modal QFLAG value within each 3x3 window (i.e. new resampled pixel) in Europe/North Africa")
+
+freq5 <- round((sum(freq_df_FAPAR_Eur[freq_df_FAPAR_Eur$num_cells_equal2modal %in% c(5:9), 2]) * 100) / sum(freq_df_FAPAR_Eur$Freq), 1)
+
 ```
 
 
@@ -400,6 +409,20 @@ Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_resu
 
 &nbsp;
 
+In addition to the FAPAR layer, the quality flag layer (QFLAG) can also be resampled. However, due to its different implementation in both products (i.e. 1km-v2 is coded as 16bit pattern and 300m-v1 as 8bit, with different categories for both), the resampled map cannot be compared to the original 1km product. 
+
+As QFLAG is a categorical variable, the resample can be performed using the mode (*modal* function of the *raster* package). While `r fig_num("f_1km_1km_Raggr_FAPAR_QFLAG_eur", display = "cite")` shows that most of the cells of the resampled product for the European/North African region are unflagged,  `r table_num("freq_table", display = "cite")` presents the frequencies of number of cells equal to the mode within each 3x3 window (i.e. new resampled pixel) in this area. From this table it can be derived that nearly `r freq5`% of the new pixels have 5 or more finer pixels equal to the modal QFLAG value.
+
+![`r fig_1km_1km_Raggr_FAPAR_QFLAG_eur`](`r orig_Raggr_FAPAR_QFLAG_eur`)
+
+&nbsp;
+
+`r pander(freq_df_FAPAR_Eur, caption = freq_df)`
+
+&nbsp;
+
+
+
 
 
 ## FAPAR resampled vs the original 1km product: Amazonia
@@ -410,6 +433,13 @@ orig_Raggr_FAPAR_ama <- paste0(path2save_FAPAR_Ama, "/fapar1km_1kmResampled_RAgg
 
 fig_1km_1km_Raggr_FAPAR_ama_scat <- fig_num(name = "f_1km_1km_Raggr_FAPAR_ama_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original FAPAR product against the values of the same pixels of the resampled map using the R tool (blue points) for Amazonia. Also the regression (red) line")
 orig_Raggr_FAPAR_ama_scat <- paste0(path2save_FAPAR_Ama, "/resample_correlation_RAggr.jpg")
+
+fig_1km_1km_Raggr_FAPAR_QFLAG_ama <- fig_num(name = "f_1km_1km_Raggr_FAPAR_QFLAG_ama", caption = "Resampled QFLAG map at 1km resolution using the R-based tool for the Amazonian study area")
+orig_Raggr_FAPAR_QFLAG_ama <- paste0(path2save_FAPAR_Ama, "/r300m_resampled1km_Aggr_QFLAG.jpg")
+
+freq_df_ama <- table_num(name = "freq_table_ama", caption = "Frequencies of number of cells equal to the modal QFLAG value within each 3x3 window (i.e. new resampled pixel) in Amazonia")
+
+freq5a <- round((sum(freq_df_FAPAR_Ama[freq_df_FAPAR_Ama$num_cells_equal2modal %in% c(5:9), 2]) * 100) / sum(freq_df_FAPAR_Ama$Freq), 1)
 
 ```
 
@@ -423,6 +453,17 @@ As seen in `r fig_num("f_1km_1km_Raggr_FAPAR_ama", display = "cite")`, the resam
 The following scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_ama_scat", display = "cite")`) and the calculated statistics (Pearson's *r* = `r comp_results[5, 2]`, RMSE = `r comp_results[5, 3]` and MAE = `r comp_results[5, 4]`) showed not very good results of the resample, in line with the LAI products for the same region.  
 
 ![`r fig_1km_1km_Raggr_FAPAR_ama_scat`](`r orig_Raggr_FAPAR_ama_scat`)
+
+&nbsp;
+
+Equally than for the European/North African area, the quality flag layer (QFLAG) was also resampled using the *modal* function of the *raster* package. `r fig_num("f_1km_1km_Raggr_FAPAR_QFLAG_ama", display = "cite")` shows the resampled product to 1km for this region. In addition,  `r table_num("freq_table_ama", display = "cite")` presents the frequencies of number of cells equal to the mode within each 3x3 window (i.e. new resampled pixel). From this table it can be derived that `r freq5a`% of the new 1km cells have 5 or more cells of the finer resolution product equal to the modal QFLAG value.
+
+![`r fig_1km_1km_Raggr_FAPAR_QFLAG_ama`](`r orig_Raggr_FAPAR_QFLAG_ama`)
+
+&nbsp;
+
+
+`r pander(freq_df_FAPAR_Ama, caption = freq_df_ama)`
 
 &nbsp;
 

@@ -143,7 +143,7 @@ if(all(round(extent(fapar_300m_orig_Eur)[1], 7) %in% round(x_ext, 7) &
 
 ## Dealing with "flagged values" ####
 # "flagged values" are those corresponding to water bodies, NAs, etc. 
-# They have FAPAR values > cuttoff_NA_err (0.94), or assigned values in the NetCDF between 251 and 255.
+# They have FAPAR values > cuttoff_NA_err (0.9400001), or assigned values in the NetCDF between 251 and 255.
 # They have FAPAR values < cuttoff_NA_err_min (0.00), or assigned values in the NetCDF between 251 and 255.
 # We might want to "remove" them from the average calculations as they are highly influencing such averages,
 # driving to wrong predictions.
@@ -152,6 +152,8 @@ if(all(round(extent(fapar_300m_orig_Eur)[1], 7) %in% round(x_ext, 7) &
 fapar300m_rstr <- fapar_300m_orig_Eur
 
 cuttoff_NA_err <- 0.9400000001  # everything >= cuttoff_NA_err, must be removed for the calculations
+cuttoff_NA_err <- 0.9400001  # everything >= cuttoff_NA_err, must be removed for the calculations
+
 cuttoff_NA_err_min <- -0.00000001  # everything <= cuttoff_NA_err_min, must be removed for the calculations
 
 jpeg(paste0(path2save, "/fapar300m_NA.jpg"))
@@ -385,4 +387,110 @@ if(date == "may19"){
   save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fapar_europe_4Report.RData"))
 }
 
+
+## QFLAG ####
+if(date == "may19"){
+  nc_file300m <- paste0(path2data, "/fapar300_v1_333m/fapar300_v1_333m_c_gls_FAPAR300_201905100000_GLOBE_PROBAV_V1.0.1.nc")
+  fapar_1km_orig <- paste0(path2data, "/fapar_v2_1km/fapar_v2_1km_c_gls_FAPAR-RT6_201905100000_GLOBE_PROBAV_V2.0.1.nc")
+}else if(date == "august18"){
+  nc_file300m <- paste0(path2data, "/fapar300_v1_333m/fapar300_v1_333m_c_gls_FAPAR300_201808100000_GLOBE_PROBAV_V1.0.1.nc")
+  fapar_1km_orig <- paste0(path2data, "/fapar_v2_1km/fapar_v2_1km_c_gls_FAPAR-RT6_201808100000_GLOBE_PROBAV_V2.0.1.nc")
+}
+#nc_open(nc_file300m)
+qflag <- raster(nc_file300m, varname = "QFLAG")
+
+qflag <- crop(qflag, my_extent)
+table(getValues(qflag))
+
+
+
+qflag
+## Resampling using aggregate() ####
+modal_w.cond <- function(x, ...){ # modal including condition 'minimum 5 valid pixels'
+  n_valid <- sum(!is.na(x)) # number of cells with valid value
+  if(n_valid > 4){
+    dts <- list(...)
+    if(is.null(dts$na_rm)) dts$na_rm <- TRUE
+    x_modal <- modal(x, na.rm = dts$na_rm)
+    return(x_modal)
+  }else{
+    x_modal <- NA
+    return(x_modal)
+  }
+}
+
+aggr_method <- "modal_w.cond"
+aggr_method <- "modal"
+t0 <- Sys.time()
+r300m_resampled1km_Aggr <- aggregate(qflag,
+                                     fact = 3, # from 333m to 1km  
+                                     fun = aggr_method, 
+                                     na.rm = TRUE, 
+                                     #filename = 'r300m_resampled1km_Aggr.tif',
+                                     overwrite = TRUE)
+Sys.time() - t0
+r300m_resampled1km_Aggr
+
+# plotting resampled map
+jpeg(paste0(path2save, "/r300m_resampled1km_Aggr_QFLAG.jpg"))
+categs <- unique(getValues(r300m_resampled1km_Aggr))
+colrs <- length(categs)
+colrs <- rev(terrain.colors(colrs))
+plot(r300m_resampled1km_Aggr, 
+     main = "FAPAR-QFLAG 1km (resampled)", 
+     legend = FALSE, col = colrs)
+par(xpd = TRUE)
+legend(x = 'right', 
+       legend = c(categs), fill = colrs,
+       inset=c(- 0.2))
+dev.off()
+
+
+
+nModal_w.cond <- function(x, ...){ # modal including condition 'minimum 5 valid pixels'
+  n_valid <- sum(!is.na(x)) # number of cells with valid value
+  if(n_valid > 0){
+    dts <- list(...)
+    if(is.null(dts$na_rm)) dts$na_rm <- TRUE
+    x_modal <- modal(x, na.rm = dts$na_rm)
+    x_nModal <- sum(x == x_modal)
+    return(x_nModal)
+  }else{
+    x_nModal <- NA
+    return(x_nModal)
+  }
+}
+
+aggr_method <- "nModal_w.cond"
+t0 <- Sys.time()
+r300m_resampled1km_Aggr_1 <- aggregate(qflag,
+                                       fact = 3, # from 333m to 1km  
+                                       fun = aggr_method, 
+                                       na.rm = TRUE, 
+                                       #filename = 'r300m_resampled1km_Aggr.tif',
+                                       overwrite = TRUE)
+Sys.time() - t0
+r300m_resampled1km_Aggr_1
+
+freq_df <- as.data.frame(table(getValues(r300m_resampled1km_Aggr_1)))
+names(freq_df)[1] <- c("num_cells_equal2modal")
+freq_df
+round((sum(freq_df[freq_df$num_cells_equal2modal %in% c(5:9), 2]) * 100) / sum(freq_df$Freq), 1)
+write.csv(freq_df, "freq_df.csv", row.names = FALSE)
+
+
+summ_df <- as.data.frame(as.matrix(summary(getValues(r300m_resampled1km_Aggr_1))))
+names(summ_df)[1] <- c("num_cells_equal2modal")
+summ_df <- round(summ_df, 1)
+write.csv(summ_df, "summ_df.csv", row.names = TRUE)
+
+
+# Saving stuff for the report
+stuff2save <- c("comp_results", "my_extent", "img_date", "freq_df")
+
+if(date == "may19"){
+  save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fapar_europe_4Report_May19.RData"))
+}else if(date == "august18"){
+  save(list = stuff2save, file = paste0(path2save, "/ResampleResults_fapar_europe_4Report.RData"))
+}
 

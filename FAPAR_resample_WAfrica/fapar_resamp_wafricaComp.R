@@ -146,6 +146,7 @@ if(all(round(extent(fapar_300m_orig_WAfr)[1], 7) %in% round(x_ext, 7) &
 fapar300m_rstr <- fapar_300m_orig_WAfr
 
 cuttoff_NA_err <- 0.9400000001  # everything >= cuttoff_NA_err, must be removed for the calculations
+cuttoff_NA_err <- 0.9400001  # everything >= cuttoff_NA_err, must be removed for the calculations
 cuttoff_NA_err_min <- -0.00000001  # everything <= cuttoff_NA_err_min, must be removed for the calculations
 
 jpeg(paste0(path2save, "/fapar300m_NA.jpg"))
