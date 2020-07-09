@@ -132,7 +132,7 @@ if(all(round(extent(lai_300m_orig_Amaz)[1], 7) %in% round(x_ext, 7) &
 # Converting flagged values to NAs
 lai300m_rstr <- lai_300m_orig_Amaz
 
-cuttoff_NA_err <- 7.000001  # everything >= cuttoff_NA_err, must be removed for the calculations
+cuttoff_NA_err <- 6.99993  # everything > cuttoff_NA_err, must be removed for the calculations
 cuttoff_NA_err_min <- -0.000001  # everything <= cuttoff_NA_err_min, must be removed for the calculations
 
 jpeg(paste0(path2save, "/lai1km_NA.jpg"))

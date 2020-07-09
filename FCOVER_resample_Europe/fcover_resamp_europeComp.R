@@ -153,6 +153,7 @@ if(all(round(extent(fcover_300m_orig_Eur)[1], 7) %in% round(x_ext, 7) &
 # Converting flagged values to NAs
 fcover300m_rstr <- fcover_300m_orig_Eur
 
+cuttoff_NA_err <- 1.00000005  # everything >= cuttoff_NA_err, must be removed for the calculations
 cuttoff_NA_err <- 1.000000001  # everything >= cuttoff_NA_err, must be removed for the calculations
 cuttoff_NA_err_min <- -0.00000001  # everything <= cuttoff_NA_err_min, must be removed for the calculations
 

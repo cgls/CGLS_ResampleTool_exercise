@@ -184,6 +184,7 @@ cutoff_df <- table_num(name = "cutoff_table", caption = "Cutoff of valid values 
 The analysis was made using different subsets of several 10-daily CGLS vegetation-related global products derived from PROBA-V data. See `r table_num("prods_table", display = "cite")` for the products used in this assessment, as well as their image date. FAPAR and DMP were analysed for two different dates in order to be compared with other products in different areas and/or seasons (different amount of clouds).
 
 `r kable(products_df, caption = prods_df)`
+**Note:** Documentation of these products can be found at https://land.copernicus.eu/global/themes/vegetation
 &nbsp;
 
 The tests were made in three different areas depending on the products. Firstly, all the resampled products were tested for Europe and North Africa (coordinates in Decimal Degrees `r work_extent_eur`) in order to have a wide representation of different landscapes. Secondly, the LAI, FAPAR and FCOVER products were tested also on a subset from a tropical area in Amazonia (`r work_extent_ama`) in order to have as well a good representation of evergreen broadleaf forests (EBF). Finally, FAPAR and DMP were tested also in a western African region (`r work_extent_wafr`). The three following images show examples of the 333m working maps used for the resample tests for the different study areas (`r fig_num("f_ndvi_300_eur", display = "cite")`, `r fig_num("f_lai_300_ama", display = "cite")` and `r fig_num("f_fapar_300_wafr", display = "cite")`).
@@ -199,6 +200,7 @@ The tests were made in three different areas depending on the products. Firstly,
 The original Global Land product files usually can be downloaded as a netCDF4 file. They can often contain specific values for invalid pixels (flagged values), which need to be dealt with. In the case of the NDVI products, for example, digital values in the netCDF (DN) larger than 250 are flagged and need to be converted to NA (No Data). When the netCDF files are read in as a raster object, the digital values are scaled into real NDVI values automatically (-0.08:0.93). Therefore, after reading the files, all pixels with NDVI values larger than 0.92 (= 250 x scale + offset; in this case, scale = 0.004 and offset = -0.08) were set to NA. In the same way, all the other products' non-valid values were transformed to NAs according to their valid ranges, which can be seen in `r table_num("cutoff_table", display = "cite")`. In addition, other supporting information of each product can be found both in the netCDF file metadata and in their Product User Manual at https://land.copernicus.eu/global/products/. 
 
 `r kable(cutoff_method_df[, c(1:3, 5:8)], caption = cutoff_df)`
+**Note:** Mismatches between physical values in the table and the ones reported in products documentation are due to a floating point imprecision when scaling the values in R. A more comprehensive R package for data reading is under development
 &nbsp;
 
 
@@ -379,7 +381,7 @@ The reason of such poorer results might be mainly due to the differences in the 
 ## FAPAR resampled vs the original 1km product: Europe/North Africa
 
 ```{r echo = FALSE}
-fig_1km_1km_Raggr_FAPAR_eur <- fig_num(name = "f_1km_1km_Raggr_FAPAR_eur", caption = "Original FAPAR map at 1km resolution and the resampled one using the R-based tool for the European and north African study area")
+fig_1km_1km_Raggr_FAPAR_eur <- fig_num(name = "f_1km_1km_Raggr_FAPAR_eur", caption = "Original FAPAR map at 1km resolution and the resampled one using the R-based tool for the European and North African study area")
 orig_Raggr_FAPAR_eur <- paste0(path2save_FAPAR_Eur, "/fapar1km_1kmResampled_RAggr.jpg")
 
 fig_1km_1km_Raggr_FAPAR_eur_scat <- fig_num(name = "f_1km_1km_Raggr_FAPAR_eur_scat", caption = "Scatter plot displaying a random subset of pixel values of the 1km original FAPAR product against the values of the same pixels of the resampled map using the R tool (blue and magenta points) for the European/North African region. Magenta points represent a subgroup of pixels with relatively larger errors to be checked")
@@ -388,7 +390,7 @@ orig_Raggr_FAPAR_eur_scat <- paste0(path2save_FAPAR_Eur, "/resample_correlation_
 fig_1km_1km_Raggr_FAPAR_eur_ErrorMap <- fig_num(name = "f_1km_1km_Raggr_FAPAR_eur_ErrorMap", caption = "Subgroup of pixels checked in the European/North African study area (in magenta). Regular pixels in white")
 orig_Raggr_FAPAR_eur_ErrorMap <- paste0(path2save_FAPAR_Eur, "/fapar1km_1kmResampled_RAggr_LargerErrors.jpg")
 
-fig_1km_1km_Raggr_FAPAR_QFLAG_eur <- fig_num(name = "f_1km_1km_Raggr_FAPAR_QFLAG_eur", caption = "Resampled QFLAG map at 1km resolution using the R-based tool for the European and north African study area")
+fig_1km_1km_Raggr_FAPAR_QFLAG_eur <- fig_num(name = "f_1km_1km_Raggr_FAPAR_QFLAG_eur", caption = "Resampled QFLAG values at 1km resolution using the R-based tool for the European and North African study area")
 orig_Raggr_FAPAR_QFLAG_eur <- paste0(path2save_FAPAR_Eur, "/r300m_resampled1km_Aggr_QFLAG.jpg")
 
 freq_df <- table_num(name = "freq_table", caption = "Frequencies of number of cells equal to the modal QFLAG value within each 3x3 window (i.e. new resampled pixel) in Europe/North Africa")
@@ -404,7 +406,7 @@ freq5 <- round((sum(freq_df_FAPAR_Eur[freq_df_FAPAR_Eur$num_cells_equal2modal %i
 
 &nbsp;
 
-Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_results[4, 3]` and MAE = `r comp_results[4, 4]`) and the scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")`) showed general good results of the resample, in line with NDVI and a bit better then LAI for the same region. However, there were a subgroup of cells of the original 1km product with values lower than 0.14, which gave much larger resampled values, and needed to be carefully checked. They can be seen in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")` and mapped in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_ErrorMap", display = "cite")`. They might be related to open water surfaces (e.g. lakes), therefore using a water mask could improve the results of the resample.
+Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_results[4, 3]` and MAE = `r comp_results[4, 4]`) and the scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")`) showed general good results of the resample, in line with NDVI and a bit better then LAI for the same region. However, there was a subgroup of cells of the original 1km product with values lower than 0.14, which gave much larger resampled values, and needed to be carefully checked. They can be seen in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_scat", display = "cite")` and mapped in `r fig_num("f_1km_1km_Raggr_FAPAR_eur_ErrorMap", display = "cite")`. They might be related to open water surfaces (e.g. lakes), therefore using a water mask could improve the results of the resample.
 
 ![`r fig_1km_1km_Raggr_FAPAR_eur_scat`](`r orig_Raggr_FAPAR_eur_scat`)
 
@@ -414,7 +416,7 @@ Both the statistics (Pearson's *r* = `r comp_results[4, 2]`, RMSE = `r comp_resu
 
 In addition to the FAPAR layer, the quality flag layer (QFLAG) can also be resampled. However, due to its different implementation in both products (i.e. 1km-v2 is coded as 16bit pattern and 300m-v1 as 8bit, with different categories for both), the resampled map cannot be compared to the original 1km product. 
 
-As QFLAG is a categorical variable, the resample can be performed using the mode (*modal* function of the *raster* package). While `r fig_num("f_1km_1km_Raggr_FAPAR_QFLAG_eur", display = "cite")` shows that most of the cells of the resampled product for the European/North African region are unflagged,  `r table_num("freq_table", display = "cite")` presents the frequencies of number of cells equal to the mode within each 3x3 window (i.e. new resampled pixel) in this area. From this table it can be derived that nearly `r freq5`% of the new pixels have 5 or more finer pixels equal to the modal QFLAG value.
+As QFLAG is a categorical variable, the resample can be performed using the mode (*modal* function of the *raster* package). While `r fig_num("f_1km_1km_Raggr_FAPAR_QFLAG_eur", display = "cite")` shows that most of the cells of the resampled product for the European/North African region are unflagged,  `r table_num("freq_table", display = "cite")` presents the frequencies of how many cells within each 3×3 window (i.e. new resampled pixel) are equal to the mode in that window. In this table it can be seen that nearly `r freq5`% of the windows have 5 or more values equal to the modal QFLAG value in the window.
 
 ![`r fig_1km_1km_Raggr_FAPAR_QFLAG_eur`](`r orig_Raggr_FAPAR_QFLAG_eur`)
 
@@ -437,7 +439,7 @@ orig_Raggr_FAPAR_ama <- paste0(path2save_FAPAR_Ama, "/fapar1km_1kmResampled_RAgg
 fig_1km_1km_Raggr_FAPAR_ama_scat <- fig_num(name = "f_1km_1km_Raggr_FAPAR_ama_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original FAPAR product against the values of the same pixels of the resampled map using the R tool (blue points) for Amazonia. Also the regression (red) line")
 orig_Raggr_FAPAR_ama_scat <- paste0(path2save_FAPAR_Ama, "/resample_correlation_RAggr.jpg")
 
-fig_1km_1km_Raggr_FAPAR_QFLAG_ama <- fig_num(name = "f_1km_1km_Raggr_FAPAR_QFLAG_ama", caption = "Resampled QFLAG map at 1km resolution using the R-based tool for the Amazonian study area")
+fig_1km_1km_Raggr_FAPAR_QFLAG_ama <- fig_num(name = "f_1km_1km_Raggr_FAPAR_QFLAG_ama", caption = "Resampled QFLAG values at 1km resolution using the R-based tool for the Amazonian study area")
 orig_Raggr_FAPAR_QFLAG_ama <- paste0(path2save_FAPAR_Ama, "/r300m_resampled1km_Aggr_QFLAG.jpg")
 
 freq_df_ama <- table_num(name = "freq_table_ama", caption = "Frequencies of number of cells equal to the modal QFLAG value within each 3x3 window (i.e. new resampled pixel) in Amazonia")
@@ -447,19 +449,19 @@ freq5a <- round((sum(freq_df_FAPAR_Ama[freq_df_FAPAR_Ama$num_cells_equal2modal %
 ```
 
 
-As seen in `r fig_num("f_1km_1km_Raggr_FAPAR_ama", display = "cite")`, the resampled to 1km FAPAR map shows much more cells with NoData than the original 1km product. As already mentioned above, this is likely due to the gap filling method used in the version 2 of the Global Land products. 
+As seen in `r fig_num("f_1km_1km_Raggr_FAPAR_ama", display = "cite")`, the resampled to 1km FAPAR map shows much more cells with NoData than the original 1km product. As already mentioned above, this is likely due to the gap filling method used in the 1km version 2 FAPAR products. 
 
 ![`r fig_1km_1km_Raggr_FAPAR_ama`](`r orig_Raggr_FAPAR_ama`)
 
 &nbsp;
 
-The following scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_ama_scat", display = "cite")`) and the calculated statistics (Pearson's *r* = `r comp_results[5, 2]`, RMSE = `r comp_results[5, 3]` and MAE = `r comp_results[5, 4]`) showed not very good results of the resample, in line with the LAI products for the same region.  
+The following scatterplot (`r fig_num("f_1km_1km_Raggr_FAPAR_ama_scat", display = "cite")`) and the calculated statistics (Pearson's *r* = `r comp_results[5, 2]`, RMSE = `r comp_results[5, 3]` and MAE = `r comp_results[5, 4]`) showed not good results of the resample, in line with the LAI products for the same region.  
 
 ![`r fig_1km_1km_Raggr_FAPAR_ama_scat`](`r orig_Raggr_FAPAR_ama_scat`)
 
 &nbsp;
 
-Equally than for the European/North African area, the quality flag layer (QFLAG) was also resampled using the *modal* function of the *raster* package. `r fig_num("f_1km_1km_Raggr_FAPAR_QFLAG_ama", display = "cite")` shows the resampled product to 1km for this region. In addition,  `r table_num("freq_table_ama", display = "cite")` presents the frequencies of number of cells equal to the mode within each 3x3 window (i.e. new resampled pixel). From this table it can be derived that `r freq5a`% of the new 1km cells have 5 or more cells of the finer resolution product equal to the modal QFLAG value.
+Equally than for the European/North African area, the quality flag layer (QFLAG) was also resampled using the *modal* function of the *raster* package. `r fig_num("f_1km_1km_Raggr_FAPAR_QFLAG_ama", display = "cite")` shows the resampled product to 1km for this region. In addition,  `r table_num("freq_table_ama", display = "cite")` presents the frequencies of number of cells equal to the mode within each 3x3 window (i.e. new resampled pixel). In this table it can be seen how most of the windows (`r freq5a`%) have 5 or more values equal to the modal QFLAG value in the window.
 
 ![`r fig_1km_1km_Raggr_FAPAR_QFLAG_ama`](`r orig_Raggr_FAPAR_QFLAG_ama`)
 
@@ -482,7 +484,7 @@ orig_Raggr_FAPAR_wafr_scat <- paste0(path2save_FAPAR_WAfr, "/resample_correlatio
 
 ```
 
-In `r fig_num("f_1km_1km_Raggr_FAPAR_wafr", display = "cite")` it can be seen, similarly than in the Amazonian study area, that the resampled FAPAR map shows much more cells with NoData than the original 1km product in the EBF areas. Again, this is likely due to the gap filling method used in the version 2 of the 1km FAPAR products used in the exercises and presented in this document. 
+In `r fig_num("f_1km_1km_Raggr_FAPAR_wafr", display = "cite")` it can be seen, similarly than in the Amazonian study area, that the resampled FAPAR map shows much more cells with NoData than the original 1km product in the EBF areas. Again, this is likely due to the gap filling method used in the version 2 of the 1km FAPAR products. 
 
 ![`r fig_1km_1km_Raggr_FAPAR_wafr`](`r orig_Raggr_FAPAR_wafr`)
 
@@ -542,10 +544,10 @@ orig_Raggr_FCOVER_ama_scat <- paste0(path2save_FCOVER_Ama, "/resample_correlatio
 
 ## DMP resampled vs the original 1km product: Europe/North Africa
 ```{r echo = FALSE}
-fig_1km_1km_Raggr_DMP_eur <- fig_num(name = "f_1km_1km_Raggr_DMP_eur", caption = "Original DMP map at 1km resolution and the resampled one using the R-based tool for the Europe/North African study area")
+fig_1km_1km_Raggr_DMP_eur <- fig_num(name = "f_1km_1km_Raggr_DMP_eur", caption = "Original DMP map at 1km resolution and the resampled one using the R-based tool for the Europe/North African study area. Units: kg/ha/day")
 orig_Raggr_DMP_eur <- paste0(path2save_DMP_Eur, "/dmp1km_1kmResampled_RAggr.jpg")
 
-fig_1km_1km_Raggr_DMP_eur_scat <- fig_num(name = "f_1km_1km_Raggr_DMP_eur_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original DMP product against the values of the same pixels of the resampled map using the R tool (blue points) for Europe/North Africa. Also the regression (red) line")
+fig_1km_1km_Raggr_DMP_eur_scat <- fig_num(name = "f_1km_1km_Raggr_DMP_eur_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original DMP product against the values of the same pixels of the resampled map using the R tool (blue points) for Europe/North Africa. Also the regression (red) line. Units: kg/ha/day")
 orig_Raggr_DMP_eur_scat <- paste0(path2save_DMP_Eur, "/resample_correlation_RAggr.jpg")
 
 ```
@@ -563,10 +565,10 @@ Finally, the resampled DMP products were also tested. `r fig_num("f_1km_1km_Ragg
 
 ## DMP resampled vs the original 1km product: Western Africa
 ```{r echo = FALSE}
-fig_1km_1km_Raggr_DMP_wafr <- fig_num(name = "f_1km_1km_Raggr_DMP_wafr", caption = "Original DMP map at 1km resolution and the resampled one using the R-based tool for the Western African study area")
+fig_1km_1km_Raggr_DMP_wafr <- fig_num(name = "f_1km_1km_Raggr_DMP_wafr", caption = "Original DMP map at 1km resolution and the resampled one using the R-based tool for the Western African study area. Units: kg/ha/day")
 orig_Raggr_DMP_wafr <- paste0(path2save_DMP_WAfr, "/dmp1km_1kmResampled_RAggr.jpg")
 
-fig_1km_1km_Raggr_DMP_wafr_scat <- fig_num(name = "f_1km_1km_Raggr_DMP_wafr_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original DMP product against the values of the same pixels of the resampled map using the R tool (blue points) for Western Africa. Also the regression (red) line")
+fig_1km_1km_Raggr_DMP_wafr_scat <- fig_num(name = "f_1km_1km_Raggr_DMP_wafr_scat", caption = "Scatter plot displaying a subset of pixel values of the 1km original DMP product against the values of the same pixels of the resampled map using the R tool (blue points) for Western Africa. Also the regression (red) line. Units: kg/ha/day")
 orig_Raggr_DMP_wafr_scat <- paste0(path2save_DMP_WAfr, "/resample_correlation_RAggr.jpg")
 
 ```
@@ -583,7 +585,7 @@ In `r fig_num("f_1km_1km_Raggr_DMP_wafr", display = "cite")` it can be seen some
 
 # Conclusions
 
-After the discontinuity on the near-real time (10-daily) supply of NRT vegetation-related products at 1km resolution, the Global Land service has made available a resample tool based on the R programming language in order to ease the users to keep producing their own time series at that resolution. In this document we show several assessments made on the performance of this tool in resampling different 300m products and in different landscape typologies (i.e. Evergreen Broadleaf Forest (EBF) or not).
+After the discontinuity on the near-real time (10-daily) supply of NRT vegetation-related products at 1km resolution, the Global Land service has made available a resample tool based on the R programming language in order to ease the users to keep producing their own time series at that resolution. In this document, we show several assessments made on the performance of this tool in resampling different 300m products and in different landscape typologies (i.e. Evergreen Broadleaf Forest (EBF) or not).
 
 In general terms, the results showed similar and good performance of the tool in non-EBF landscapes for all the tested products. In contrast, the evaluation of the resample results of LAI, FAPAR and FCOVER in an EBF area in the Amazonia gave poorer results. This fact is likely due to the differences in the algorithms implemented for the production of the 10-day vegetation-related global products at 1km and 300m resolution. In light of this, the users must be aware of these differences when using this tool or any other resampling approach.
 

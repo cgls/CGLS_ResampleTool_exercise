@@ -152,7 +152,8 @@ if(all(round(extent(dmp_300m_orig_Eur)[1], 7) %in% round(x_ext, 7) &
 # Converting flagged values to NAs
 dmp300m_rstr <- dmp_300m_orig_Eur
 
-cuttoff_NA_err <- 327.6700000001  # everything >= cuttoff_NA_err, must be removed for the calculations
+cuttoff_NA_err <- 327.669993  # everything > cuttoff_NA_err, must be removed for the calculations
+cuttoff_NA_err <- 327.6700000001  # everything > cuttoff_NA_err, must be removed for the calculations
 cuttoff_NA_err_min <- -0.00000001  # everything <= cuttoff_NA_err_min, must be removed for the calculations
 
 jpeg(paste0(path2save, "/dmp300m_NA.jpg"))
