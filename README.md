@@ -4,14 +4,19 @@ The Copernicus Global Land Service ([CGLS](https://land.copernicus.eu/global/)) 
 
 The science and production teams of the CGLS, in support to the 1km users, provide different tools to make their own resampling exercises from the new 333m products to a 1km resolution, corresponding to the usual 1km grid. A Notebook with R code and some explanations on how to make a resample can be found [here](https://nbviewer.jupyter.org/github/VITObelgium/notebook-samples/blob/master/datasets/probav/ResampleTool_R_notebook.ipynb).
 
-In this repository some R scripts and a report with results can be found on a comparison made of different resampled products using this R-based tool with the original CGLS products at 1km resolution for different areas. In addition, a comparison with the results obtained with another tool (QGIS/Python-based) is also provided.
+In this repository some R scripts and a report with results can be found on a comparison made of different resampled products using this R-based tool with the original CGLS products at 1km resolution for different areas.
 
 ### Content:
 
 * NDVI - Europe/North Africa: Resmapled with R-tool vs original 1km product
-* NDVI-Europe/North Africa: Resmapled with QGIS/Python-tool vs original 1km product
-* NDVI-Europe/North Africa: Resmapled with R-tool vs resmapled with QGIS/Python-tool
 * LAI - Europe/North Africa: Resmapled with R-tool vs original 1km product
 * LAI - Amazonia: Resmapled with R-tool vs original 1km product
+* FAPAR - Europe/North Africa: Resmapled with R-tool vs original 1km product
+* FAPAR - Amazonia: Resmapled with R-tool vs original 1km product
+* FAPAR - Western Africa: Resmapled with R-tool vs original 1km product
+* FCOVER - Europe/North Africa: Resmapled with R-tool vs original 1km product
+* FCOVER - Amazonia: Resmapled with R-tool vs original 1km product
+* DMP - Europe/North Africa: Resmapled with R-tool vs original 1km product
+* DMP - Western Africa: Resmapled with R-tool vs original 1km product
 
 
