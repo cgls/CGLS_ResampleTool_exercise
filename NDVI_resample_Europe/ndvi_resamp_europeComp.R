@@ -38,7 +38,9 @@ if(Sys.info()[4] == "D01RI1700371"){
 setwd(path2save)
   
 nc_file300m <- paste0(path2data, "/ndvi300_v1_333m/ndvi300_v1_333m_c_gls_NDVI300_201905010000_GLOBE_PROBAV_V1.0.1.nc")
-qgis_resamp_europe_avrge <- paste0(path2data, "/c_gls_NDVI300_201905110000_GLOBE_PROBAV_V1.0.1.nc.tif")
+qgis_resamp_europe_avrge <- paste0(path2data, "/01052019_resampled.tif")
+qgis_resamp_europe_avrge <- paste0(path2data, "/c_gls_NDVI300_201905010000_GLOBE_PROBAV_V1.0.1.nc.tif")
+qgis_resamp_europe_avrge <- paste0(path2data, "/finale_algoritmo_compress.tif")
 ndvi_1km_orig <- paste0(path2data, "/ndvi_v2_1km/ndvi_v2_1km_c_gls_NDVI_201905010000_GLOBE_PROBAV_V2.2.1.nc")
 
 
@@ -67,9 +69,9 @@ if(all(round(qgis_extent[1], 7) %in% round(x_ext, 7) &
        round(qgis_extent[2], 7) %in% round(x_ext, 7) &
        round(qgis_extent[3], 7) %in% round(y_ext, 7) &
        round(qgis_extent[4], 7) %in% round(y_ext, 7))){
-  print("ndvi_1km_orig extent matches PROBA-V products")
+  print("qgis_resamp_europe_avrge extent matches PROBA-V products")
 }else{
-  stop("ndvi_1km_orig extent does NOT match PROBA-V products!!!")
+  stop("qgis_resamp_europe_avrge extent does NOT match PROBA-V products!!!")
 }   
 
 #if(!all(round(qgis_extent[1], 7) %in% round(x_ext, 7) &
@@ -107,9 +109,9 @@ if(all(round(extent(qgis_resamp_europe_avrge)[1], 7) %in% round(x_ext, 7) &
        round(extent(qgis_resamp_europe_avrge)[2], 7) %in% round(x_ext, 7) &
        round(extent(qgis_resamp_europe_avrge)[3], 7) %in% round(y_ext, 7) &
        round(extent(qgis_resamp_europe_avrge)[4], 7) %in% round(y_ext, 7))){
-  print("ndvi_1km_orig extent matches PROBA-V products")
+  print("qgis_resamp_europe_avrge extent matches PROBA-V products")
 }else{
-  stop("ndvi_1km_orig extent does NOT match PROBA-V products!!!")
+  stop("qgis_resamp_europe_avrge extent does NOT match PROBA-V products!!!")
 }   
 
 
@@ -492,4 +494,6 @@ comp_results[3, 4] <- mae
 stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults_NDVI_europe_4Report.RData"))
 
+#comp_results[, 2:4] <- round(comp_results[, 2:4], 5)
+#write.csv(comp_results, "comp_results.csv")
 
