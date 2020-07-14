@@ -41,6 +41,7 @@ nc_file300m <- paste0(path2data, "/ndvi300_v1_333m/ndvi300_v1_333m_c_gls_NDVI300
 qgis_resamp_europe_avrge <- paste0(path2data, "/01052019_resampled.tif")
 qgis_resamp_europe_avrge <- paste0(path2data, "/c_gls_NDVI300_201905010000_GLOBE_PROBAV_V1.0.1.nc.tif")
 qgis_resamp_europe_avrge <- paste0(path2data, "/finale_algoritmo_compress.tif")
+qgis_resamp_europe_avrge <- paste0(path2data, "/QGIS_CGLT/ndvi.tif")
 ndvi_1km_orig <- paste0(path2data, "/ndvi_v2_1km/ndvi_v2_1km_c_gls_NDVI_201905010000_GLOBE_PROBAV_V2.2.1.nc")
 
 
