@@ -186,6 +186,7 @@ r300m_resampled1km_Aggr <- aggregate(lai300m_rstr,
                                      filename = 'r300m_resampled1km_Aggr.tif',
                                      overwrite = TRUE)
 Sys.time() - t0
+#r300m_resampled1km_Aggr <- raster('r300m_resampled1km_Aggr.tif')
 r300m_resampled1km_Aggr
 
 # plotting resampled map
@@ -296,7 +297,7 @@ comp_results[1, 4] <- mae
 # Saving stuff for the report
 stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
-
+#load(paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"), verbose = TRUE)
 
 ## Mapping the largets errors ####
 rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(r300m_resampled1km_Aggr))
@@ -466,10 +467,150 @@ comp_results[3, 4] <- mae
 comp_results[3, 1] <- "orig-1km__resampl-1km-R-Aggreg-Median"
 
 stuff2save <- c("comp_results", "my_extent", "img_date")
+save(list = stuff2save, file = paste0(path2save, "/ResampleResults_lai_amazonia_4Report.RData"))
+
+
+
+
+
+
+
+
+## Comparison 'original-1km' with '300m-resampled-1km-QGIS_Aggr' ####
+qgis_resamp_amazonia_avrge <- paste0(path2data, "/QGIS_CGLT/lai.tif")
+
+qgis_resamp_amazonia_avrge <- raster(qgis_resamp_amazonia_avrge)
+
+qgis_extent <- extent(qgis_resamp_amazonia_avrge)
+
+# Checking correspondence with 1km PROBA-V products
+# The following vectors contain Long and Lat coordinates, respectively, of the 1km grid (cell boundaries):
+x_ext <- seq((-180 - ((1 / 112) / 2)), 180, (1/112))
+y_ext <- seq((80 + ((1 / 112) / 2)), - 60, - (1/112))
+
+if(all(round(qgis_extent[1], 7) %in% round(x_ext, 7) &
+       round(qgis_extent[2], 7) %in% round(x_ext, 7) &
+       round(qgis_extent[3], 7) %in% round(y_ext, 7) &
+       round(qgis_extent[4], 7) %in% round(y_ext, 7))){
+  print("qgis_resamp_amazonia_avrge extent matches PROBA-V products")
+}else{
+  stop("qgis_resamp_amazonia_avrge extent does NOT match PROBA-V products!!!")
+}   
+
+# Cropping 'qgis_resamp_amazonia_avrge'
+qgis_resamp_amazonia_avrge <- crop(qgis_resamp_amazonia_avrge, my_extent)
+qgis_resamp_amazonia_avrge
+
+if(all(round(extent(qgis_resamp_amazonia_avrge)[1], 7) %in% round(x_ext, 7) &
+       round(extent(qgis_resamp_amazonia_avrge)[2], 7) %in% round(x_ext, 7) &
+       round(extent(qgis_resamp_amazonia_avrge)[3], 7) %in% round(y_ext, 7) &
+       round(extent(qgis_resamp_amazonia_avrge)[4], 7) %in% round(y_ext, 7))){
+  print("qgis_resamp_amazonia_avrge extent matches PROBA-V products")
+}else{
+  stop("qgis_resamp_amazonia_avrge extent does NOT match PROBA-V products!!!")
+}   
+
+
+comp_results[2, 1] <- "orig-1km__resampl-1km-QGIS-Aggreg"
+
+rsmpl_df <- data.frame(getValues(lai1km_rstr), getValues(qgis_resamp_amazonia_avrge))
+rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
+
+# Pearson's correlation coefficient
+rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
+comp_results[2, 2] <- rsmpl_df_pearson
+
+# Plotting correlation (scatterplot)
+#perc_subsample <- 1   # percentage of points for plotting
+num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
+rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
+
+jpeg(paste0(path2save, "/resample_correlation_QGISAggr.jpg"))
+xyplot(rsmpl_df_subsample$getValues.qgis_resamp_amazonia_avrge. ~ rsmpl_df_subsample$getValues.lai1km_rstr., 
+       type = c("p", "r"),
+       col.line = "red",
+       xlab = "1km original LAI product",
+       ylab = "1km resampled LAI image (QGIS)",
+       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
+       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
+)
+dev.off()
+
+
+# Calculating differences (errors)
+rsmpl_df$diff <- abs(rsmpl_df$getValues.lai1km_rstr. - rsmpl_df$getValues.qgis_resamp_amazonia_avrge.)
+rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.lai1km_rstr., 1) - round(rsmpl_df$getValues.qgis_resamp_amazonia_avrge., 1))
+
+# Root Mean Square Error (RMSE; the lower, the better)
+# In GIS, the RMSD is one measure used to assess the accuracy of spatial analysis and remote sensing.
+rmse <- sqrt(mean((rsmpl_df$diff)^2)) 
+comp_results[2, 3] <- rmse
+
+# Mean Absolute Error (MAE; the lower, the better)
+mae <- mean(rsmpl_df$diff)
+comp_results[2, 4] <- mae
+
+
+# plotting original-1km + resampled-1km
+jpeg(paste0(path2save, "/lai1km_1kmResampled_QGISAggr.jpg"),
+     width = 22, height = 14, units = "cm", res = 300)
+par(mfrow = c(1, 2), mar = c(4, 4, 4, 5))
+plot(lai1km_rstr, main = "LAI 1km (original)")
+plot(qgis_resamp_amazonia_avrge, main = "LAI 1km (resampled)") 
+dev.off()
+
+
+
+
+## Comparison '300m-resampled-1km-R_Aggr' with '300m-resampled-1km-QGIS_Aggr' ####
+comp_results[3, 1] <- "resampl-1km-R-Aggreg__resampl-1km-QGIS-Aggreg"
+
+rsmpl_df <- data.frame(getValues(r300m_resampled1km_Aggr), getValues(qgis_resamp_amazonia_avrge))
+rsmpl_df <- rsmpl_df[complete.cases(rsmpl_df), 1:2]
+
+# Pearson's correlation coefficient
+rsmpl_df_pearson <- cor(rsmpl_df, method = "pearson")[2, 1]
+comp_results[3, 2] <- rsmpl_df_pearson
+
+# Plotting correlation (scatterplot)
+#perc_subsample <- 1   # percentage of points for plotting
+num_subsample <- round((nrow(rsmpl_df) * perc_subsample / 100), 0)
+rsmpl_df_subsample <- rsmpl_df[sample(nrow(rsmpl_df), num_subsample), ]
+
+jpeg(paste0(path2save, "/resample_correlation_R_QGIS_Aggr.jpg"))
+xyplot(rsmpl_df_subsample$getValues.qgis_resamp_amazonia_avrge. ~ rsmpl_df_subsample$getValues.r300m_resampled1km_Aggr., 
+       type = c("p", "r"),
+       col.line = "red",
+       xlab = "1km resampled LAI image (R)",
+       ylab = "1km resampled LAI image (QGIS)",
+       main = paste0("Pearson's r = ", as.character(round(rsmpl_df_pearson, 4))),
+       sub = paste0("Plotting a random subsample of ", num_subsample, " (", perc_subsample, "%) points")
+)
+dev.off()
+
+
+# Calculating differences (errors)
+rsmpl_df$diff <- abs(rsmpl_df$getValues.r300m_resampled1km_Aggr. - rsmpl_df$getValues.qgis_resamp_amazonia_avrge.)
+rsmpl_df$diff1 <- abs(round(rsmpl_df$getValues.r300m_resampled1km_Aggr., 1) - round(rsmpl_df$getValues.qgis_resamp_amazonia_avrge., 1))
+
+# Root Mean Square Error (RMSE; the lower, the better)
+# In GIS, the RMSD is one measure used to assess the accuracy of spatial analysis and remote sensing.
+rmse <- sqrt(mean((rsmpl_df$diff)^2)) 
+comp_results[3, 3] <- rmse
+
+# Mean Absolute Error (MAE; the lower, the better)
+mae <- mean(rsmpl_df$diff)
+comp_results[3, 4] <- mae
+
+
+
+
+# Saving stuff for the report
+stuff2save <- c("comp_results", "my_extent", "img_date")
 save(list = stuff2save, file = paste0(path2save, "/ResampleResults_LAI_amazonia_4Report.RData"))
 
-
-
+comp_results[, 2:4] <- round(comp_results[, 2:4], 5)
+write.csv(comp_results, "comp_results.csv")
 
 
 

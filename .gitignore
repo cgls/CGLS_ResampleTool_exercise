@@ -10,3 +10,7 @@ ResampleResults_NDVI_europe_4Report.RData
 ResampleResults_LAI_amazonia_4Report.RData
 ResampleResults_LAI_europe_4Report.RData
 report_old
+freq_df.csv
+summ_df.csv
+comp_results_1.csv
+comp_results_2.csv

@@ -1,0 +1,4 @@
+"","objects","Pearson's r","Root Mean Square Error","Mean Absolute Error"
+"1","orig-1km__resampl-1km-R-Aggreg",0.97951,0.05048,0.03123
+"2","orig-1km__resampl-1km-QGIS-Aggreg",0.97532,0.05476,0.03326
+"3","resampl-1km-R-Aggreg__resampl-1km-QGIS-Aggreg",0.99999,0.00114,0.00098
