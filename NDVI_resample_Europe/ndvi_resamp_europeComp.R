@@ -119,6 +119,7 @@ if(all(round(extent(qgis_resamp_europe_avrge)[1], 7) %in% round(x_ext, 7) &
 
 
 ## Reading in data 1km global ####
+specific.filename <- ndvi_1km_orig
 ndvi_1km_orig <- raster(ndvi_1km_orig)
 img_date <- ndvi_1km_orig@z[[1]]
 ndvi_1km_orig_extnt <- extent(ndvi_1km_orig)
@@ -132,6 +133,27 @@ if(all(round(ndvi_1km_orig_extnt[1], 7) %in% round(x_ext, 7) &
   stop("ndvi_1km_orig extent does NOT match PROBA-V products!!!")
 }   
   
+
+# Reading Digital Numbers
+avoid_this <- "yes"
+avoid_this <- "no"
+if (avoid_this != "yes"){
+  nc  <- nc_open(specific.filename)
+  lon <- ncvar_get(nc, "lon")
+  lat <- ncvar_get(nc, "lat")
+  time <- ncvar_get(nc, "time")
+  #Copernicus nc files have lat/long belonging to the centre of the pixel, and R uses upper/left corner --> adjust coordinates!
+  lon <- lon - (1/112)/2
+  lat <- lat + (1/112)/2
+  
+  nc_data <- ncvar_get(nc, "NDVI", raw_datavals = TRUE)
+  
+  ndvi_1km_orig <- raster(t(nc_data[, seq(dim(nc_data)[2], 1, -1)]))
+  extent(ndvi_1km_orig) <- c(range(lon)[1], (range(lon)[2] + (1/112)),
+                             (range(lat)[1] - (1/112)), range(lat)[2])
+  crs(ndvi_1km_orig) <- CRS('+init=EPSG:4326')
+}
+
 #cropping to Europe
 ndvi_1km_orig_Eur <- crop(ndvi_1km_orig, my_extent)
 as.vector(extent(my_extent))
@@ -145,9 +167,31 @@ dev.off()
 ndvi1km_rstr <- ndvi_1km_orig_Eur
 
 
+
 ## Reading in data 300m ####
+specific.filename300 <- nc_file300m
+
 ndvi_300m_orig <- raster(nc_file300m)
 ndvi_300m_orig_extnt <- extent(ndvi_300m_orig)
+
+
+if (avoid_this != "yes"){
+  nc  <- nc_open(specific.filename300)
+  lon <- ncvar_get(nc, "lon")
+  lat <- ncvar_get(nc, "lat")
+  #time <- ncvar_get(nc, "time")
+  #Copernicus nc files have lat/long belonging to the centre of the pixel, and R uses upper/left corner --> adjust coordinates!
+  lon <- lon - (1/336)/2
+  lat <- lat + (1/336)/2
+  
+  nc_data <- ncvar_get(nc, "NDVI", raw_datavals = TRUE)
+  
+  ndvi_300m_orig <- raster(t(nc_data[, seq(dim(nc_data)[2], 1, -1)]))
+  extent(ndvi_300m_orig) <- c(range(lon)[1], (range(lon)[2] + (1/336)),
+                              (range(lat)[1] - (1/336)), range(lat)[2])
+  crs(ndvi_300m_orig) <- CRS('+init=EPSG:4326')
+}
+
 
 #cropping to Europe
 ndvi_300m_orig_Eur <- crop(ndvi_300m_orig, my_extent)
